@@ -133,6 +133,61 @@
             max-height: 500px;
             opacity: 1;
         }
+    
+/* --- Enhanced mobile layout tweaks (keep design same, improve usability) --- */
+:root{
+    --header-h: 64px;
+}
+header{ min-height: var(--header-h); }
+
+/* Use small viewport height everywhere (Tailwind h-screen uses 100vh) */
+.h-screen{ height: 100svh !important; }
+.h-full{ height: 100% !important; }
+
+/* Ensure main scroll areas start below the fixed header on mobile */
+@media (max-width: 768px){
+    #genreSelectionView{
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 1rem) !important;
+        padding-bottom: calc(3.5rem + env(safe-area-inset-bottom)) !important;
+    }
+    #resultView{
+        padding-top: 0 !important;
+    }
+    #backBtn{
+        top: calc(var(--header-h) + env(safe-area-inset-top) + 0.5rem) !important;
+        left: calc(1rem + env(safe-area-inset-left)) !important;
+    }
+    #posterPane{
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 0.75rem) !important;
+        padding-left: calc(1.25rem + env(safe-area-inset-left)) !important;
+        padding-right: calc(1.25rem + env(safe-area-inset-right)) !important;
+        height: 38svh !important;
+    }
+    #detailsPane{
+        height: calc(62svh - env(safe-area-inset-bottom)) !important;
+        padding-top: 0.75rem !important;
+    }
+    #resTitle{
+        font-size: clamp(1.9rem, 6vw, 3rem) !important;
+        line-height: 1.05 !important;
+    }
+    #resTagline{
+        font-size: 0.95rem !important;
+    }
+    /* Make provider logos easier to tap */
+    .provider-logo{
+        width: 44px !important;
+        height: 44px !important;
+    }
+    /* Increase tap target for chips/buttons in bottom bar */
+    #resultBottomBar button, #resultBottomBar a{
+        min-height: 48px;
+    }
+}
+
+/* Smooth scroll + prevent horizontal layout shifts on mobile */
+html{ -webkit-text-size-adjust: 100%; }
+*{ box-sizing: border-box; }
     </style>
 </head>
 <body class="flex flex-col h-screen w-full font-sans antialiased selection:bg-rose-500/30">
@@ -274,12 +329,12 @@
         <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full overflow-hidden bg-black/80">
             
             <!-- Close / Back Button -->
-            <button onclick="resetApp()" class="md:hidden absolute top-20 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
+            <button id="backBtn" onclick="resetApp()" class="md:hidden absolute top-20 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-6 h-6"></i>
             </button>
 
             <!-- LEFT/TOP: Permanent Poster Area -->
-            <div class="w-full md:w-4/12 h-[40vh] md:h-full relative bg-black/50 flex-shrink-0 border-r border-white/5 flex items-center justify-center p-6 md:p-12 pt-24 md:pt-12">
+            <div id="posterPane" class="w-full md:w-4/12 h-[40vh] md:h-full relative bg-black/50 flex-shrink-0 border-r border-white/5 flex items-center justify-center p-6 md:p-12 pt-24 md:pt-12">
                 <div id="posterArea" class="w-full max-w-[280px] md:max-w-full h-auto aspect-[2/3] relative shadow-2xl rounded-xl overflow-hidden border border-white/10 transform transition-transform hover:scale-[1.02]">
                     <!-- Poster injected here via JS -->
                 </div>
@@ -288,7 +343,7 @@
             </div>
 
             <!-- RIGHT/BOTTOM: Details -->
-            <div class="w-full md:w-8/12 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative pt-4 md:pt-24">
+            <div id="detailsPane" class="w-full md:w-8/12 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative pt-4 md:pt-24">
                 
                 <div class="p-6 md:p-10 max-w-4xl mx-auto w-full">
                     
@@ -351,7 +406,7 @@
                 </div>
 
                 <!-- Sticky Bottom Bar -->
-                <div class="sticky bottom-0 bg-black/90 backdrop-blur-lg border-t border-white/10 p-4 md:p-6 flex gap-3 z-20 mt-auto">
+                <div id="resultBottomBar" class="sticky bottom-0 bg-black/90 backdrop-blur-lg border-t border-white/10 p-4 md:p-6 flex gap-3 z-20 mt-auto">
                      <button onclick="resetApp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 md:py-4 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2">
                         <i data-lucide="x" class="w-4 h-4"></i> <span class="hidden md:inline">Reject</span>
                     </button>
@@ -775,7 +830,7 @@
                         
                         a.href = searchUrl;
                         a.target = "_blank";
-                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="Watch on ${p.provider_name}">`;
+                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="provider-logo w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="Watch on ${p.provider_name}">`;
                         provList.appendChild(a);
                     });
                 } else {
