@@ -277,7 +277,8 @@
                     <!-- Mobile: Flows after poster. Desktop: Scrolls independently. -->
                     <div id="detailsCol" class="w-full md:w-7/12 lg:w-8/12 relative flex flex-col md:h-full md:overflow-y-auto bg-slate-950 md:bg-transparent">
                         
-                        <div class="p-5 md:p-10 lg:p-12 max-w-4xl mx-auto w-full pb-32">
+                        <!-- Added top padding (md:pt-24 lg:pt-28) to clear the header on desktop -->
+                        <div class="p-5 md:px-10 md:pb-10 md:pt-24 lg:px-12 lg:pb-12 lg:pt-28 max-w-4xl mx-auto w-full pb-32">
                             
                             <!-- Header Info -->
                             <div class="flex flex-wrap items-center gap-3 mb-4 justify-center md:justify-start">
