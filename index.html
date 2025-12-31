@@ -19,29 +19,69 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        @keyframes pulse-heart {
+            0% { transform: scale(1); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
         .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-spin-slow { animation: spin 3s linear infinite; }
+        .animate-heart { animation: pulse-heart 0.8s ease-out forwards; }
         
         /* Utility to hide/show */
         .hidden { display: none !important; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Dynamic Background */
+        #dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            filter: blur(20px) brightness(0.3);
+            transition: background-image 1s ease-in-out;
+        }
+        #dynamic-bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(to bottom, rgba(2,6,23,0.8), rgba(2,6,23,0.95));
+        }
     </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-rose-500/30 flex flex-col">
+<body class="min-h-screen text-slate-200 font-sans selection:bg-rose-500/30 flex flex-col relative overflow-x-hidden">
+
+    <!-- Dynamic Background Elements -->
+    <div id="dynamic-bg"></div>
+    <div id="dynamic-bg-overlay"></div>
 
     <!-- Header -->
-    <header class="p-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
+    <header class="p-6 border-b border-slate-800/50 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50">
         <div class="container mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/20">
+            <!-- Clickable Logo (Home Button) -->
+            <button id="logoBtn" class="flex items-center gap-3 group focus:outline-none">
+                <div class="p-2 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/20 group-hover:scale-110 transition-transform">
                     <i data-lucide="film" class="text-white w-6 h-6"></i>
                 </div>
-                <h1 class="text-2xl font-black tracking-tight text-white hidden sm:block">
+                <h1 class="text-2xl font-black tracking-tight text-white hidden sm:block group-hover:text-rose-100 transition-colors">
                     Movie<span class="text-rose-500">Picker</span>
                 </h1>
-            </div>
+            </button>
             
-            <div class="flex items-center gap-2 text-sm font-medium text-slate-400 bg-slate-900 border border-slate-800 px-4 py-2 rounded-full">
+            <div class="flex items-center gap-2 text-sm font-medium text-slate-400 bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-full backdrop-blur-sm">
                 <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 <span>TMDB Connected</span>
             </div>
@@ -49,24 +89,75 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-12 flex flex-col items-center min-h-[60vh] justify-center relative flex-grow">
+    <main class="container mx-auto px-4 py-8 flex flex-col items-center min-h-[70vh] justify-center relative flex-grow">
         
         <!-- Error Notification -->
-        <div id="errorToast" class="hidden absolute top-0 bg-red-500/10 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl items-center gap-3 mb-8 animate-fade-in max-w-lg z-40">
+        <div id="errorToast" class="hidden absolute top-0 bg-red-500/10 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl items-center gap-3 mb-8 animate-fade-in max-w-lg z-40 backdrop-blur-md">
             <i data-lucide="alert-circle" class="flex-shrink-0"></i>
             <p id="errorText">Error message here</p>
             <button onclick="document.getElementById('errorToast').classList.add('hidden')" class="ml-auto hover:text-white">✕</button>
         </div>
 
-        <!-- VIEW 1: Genre Selection -->
-        <div id="genreSelectionView" class="w-full max-w-4xl animate-fade-in">
-            <div class="text-center mb-12 space-y-4">
-                <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">What are you in the mood for?</h2>
-                <p id="welcomeText" class="text-slate-400 text-lg max-w-lg mx-auto">
-                    Select a genre below and we'll curate the perfect movie night for you.
-                </p>
+        <!-- VIEW 1: Filters & Genre Selection -->
+        <div id="genreSelectionView" class="w-full max-w-5xl animate-fade-in flex flex-col items-center">
+            
+            <div class="text-center mb-8 space-y-4">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-2">What are you in the mood for?</h2>
+                <p class="text-slate-400 text-lg">Configure your filters and pick a genre.</p>
             </div>
-            <div id="genreGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+
+            <!-- Advanced Filters -->
+            <div class="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 max-w-3xl bg-slate-900/40 p-6 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+                <!-- Decade Filter -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Decade</label>
+                    <div class="relative">
+                        <select id="decadeFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                            <option value="">Any Decade</option>
+                            <option value="2020">2020s</option>
+                            <option value="2010">2010s</option>
+                            <option value="2000">2000s</option>
+                            <option value="1990">1990s</option>
+                            <option value="1980">1980s</option>
+                            <option value="1970">1970s</option>
+                            <option value="old">Classics (Pre-70s)</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Rating Filter -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Min Rating</label>
+                    <div class="relative">
+                        <select id="ratingFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                            <option value="">Any Rating</option>
+                            <option value="9">9+ (Masterpieces)</option>
+                            <option value="8">8+ (Excellent)</option>
+                            <option value="7">7+ (Good)</option>
+                            <option value="6">6+ (Decent)</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Runtime Filter -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Runtime</label>
+                    <div class="relative">
+                        <select id="runtimeFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                            <option value="">Any Length</option>
+                            <option value="short">Short (&lt; 90m)</option>
+                            <option value="standard">Standard (90-120m)</option>
+                            <option value="epic">Epic (&gt; 120m)</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Genre Grid -->
+            <div id="genreGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-4xl">
                 <!-- Genres injected via JS -->
             </div>
         </div>
@@ -81,79 +172,120 @@
                </div>
             </div>
             <h3 id="loadingText" class="text-2xl font-medium text-slate-300">Picking a movie...</h3>
-            <p id="loadingSubtext" class="text-slate-500">Searching archives...</p>
+            <p id="loadingSubtext" class="text-slate-500">Applying your filters...</p>
         </div>
 
         <!-- VIEW 3: Result -->
-        <div id="resultView" class="hidden w-full flex flex-col items-center space-y-8">
+        <div id="resultView" class="hidden w-full flex flex-col items-center space-y-6 max-w-6xl">
             <div class="text-center space-y-2">
-                <p id="resultGenreLabel" class="text-slate-500 uppercase tracking-widest text-sm font-semibold">Your Pick</p>
-                <h2 class="text-3xl font-bold text-white">Watch this tonight!</h2>
+                <p id="resultGenreLabel" class="text-slate-400 uppercase tracking-widest text-xs font-bold shadow-black drop-shadow-md">Your Pick</p>
+                <h2 class="text-3xl md:text-4xl font-black text-white drop-shadow-lg">Watch this tonight!</h2>
             </div>
             
-            <!-- Movie Card -->
-            <div class="w-full max-w-md mx-auto bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border border-slate-700 animate-fade-in-up flex flex-col">
-                <!-- Poster -->
-                <div class="relative h-96 w-full bg-slate-900 overflow-hidden group">
-                    <img id="moviePoster" src="" alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 hidden">
+            <!-- Main Content Area -->
+            <div id="swipeCard" class="flex flex-col md:flex-row bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 animate-fade-in-up w-full relative group">
+                
+                <!-- Like Animation Overlay -->
+                <div id="likeAnimation" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50 opacity-0">
+                    <i data-lucide="heart" class="w-48 h-48 text-rose-500 fill-rose-500 drop-shadow-2xl"></i>
+                </div>
+
+                <!-- Poster Section -->
+                <div class="w-full md:w-2/5 lg:w-1/3 relative h-[500px] md:h-auto bg-slate-950">
+                    <img id="moviePoster" src="" alt="Movie Poster" class="w-full h-full object-cover hidden">
                     <div id="moviePosterFallback" class="w-full h-full bg-gradient-to-br from-rose-900 to-slate-900 flex items-center justify-center hidden">
                         <div class="text-center p-6">
                             <i data-lucide="image" class="mx-auto text-white/20 mb-2 w-12 h-12"></i>
                             <span class="text-white/40 font-medium">No Poster Available</span>
                         </div>
                     </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90"></div>
+                </div>
+
+                <!-- Details Section -->
+                <div class="w-full md:w-3/5 lg:w-2/3 p-6 md:p-10 flex flex-col gap-6 relative">
                     
-                    <div class="absolute bottom-0 left-0 p-6 w-full">
-                        <h2 id="movieTitle" class="text-3xl font-bold text-white leading-tight shadow-black drop-shadow-lg">Title</h2>
-                        <div class="flex items-center gap-3 mt-2">
-                            <div class="bg-yellow-500/20 backdrop-blur-md px-2 py-1 rounded text-yellow-400 font-bold flex items-center gap-1 text-sm">
-                                <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> <span id="movieRating">0.0</span>
+                    <!-- Header Info -->
+                    <div>
+                        <h2 id="movieTitle" class="text-3xl md:text-4xl font-bold text-white leading-tight mb-3">Title</h2>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="bg-yellow-500 text-black px-3 py-1 rounded-full font-bold flex items-center gap-1 text-sm shadow-lg shadow-yellow-500/20">
+                                <i data-lucide="star" class="w-4 h-4 fill-current"></i> <span id="movieRating">0.0</span>
                             </div>
-                            <div class="text-slate-300 font-medium text-sm bg-slate-800/60 backdrop-blur-md px-2 py-1 rounded" id="movieYear">
-                                0000
-                            </div>
+                            <span class="text-slate-400 text-sm px-2 border-r border-slate-700" id="movieYear">0000</span>
+                            <span class="text-slate-400 text-sm px-2 border-r border-slate-700" id="movieRuntime">0 min</span>
+                            <span class="text-slate-400 text-sm px-2" id="movieDirector">Dir. Name</span>
                         </div>
                     </div>
-                </div>
-                
-                <div class="p-8 space-y-6 bg-slate-800 flex-grow flex flex-col">
-                    <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700/50 flex-grow">
-                        <p id="moviePlot" class="text-slate-300 leading-relaxed italic">Plot summary...</p>
+
+                    <!-- Plot -->
+                    <p id="moviePlot" class="text-slate-300 text-lg leading-relaxed font-light">
+                        Plot summary...
+                    </p>
+
+                    <!-- Cast -->
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Starring</h4>
+                        <div id="movieCast" class="flex flex-wrap gap-2">
+                            <!-- Cast chips injected here -->
+                        </div>
                     </div>
 
-                    <button id="resetBtn" class="w-full py-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 group mt-auto shadow-lg shadow-rose-900/20">
-                        <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"></i>
-                        Pick Another Genre
-                    </button>
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-auto pt-6">
+                        <a id="trailerLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-600/20">
+                            <i data-lucide="youtube" class="w-5 h-5"></i> Trailer
+                        </a>
+                        <a id="watchLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-all">
+                            <i data-lucide="tv" class="w-5 h-5"></i> Watch
+                        </a>
+                        <button id="shareBtn" class="col-span-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-medium transition-all">
+                            <i data-lucide="share-2" class="w-5 h-5"></i> Share
+                        </button>
+                        <a id="tmdbLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-medium transition-all">
+                            <i data-lucide="external-link" class="w-5 h-5"></i> TMDB
+                        </a>
+                    </div>
                 </div>
             </div>
+
+            <!-- Mobile Swipe Hint -->
+            <div class="flex items-center justify-between w-full max-w-sm text-slate-500 text-sm md:hidden animate-pulse">
+                <span class="flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Reject</span>
+                <span class="flex items-center gap-1">Like <i data-lucide="arrow-right" class="w-4 h-4"></i></span>
+            </div>
+
+            <button id="resetBtn" class="bg-slate-800/80 hover:bg-rose-600 text-white px-8 py-3 rounded-full font-bold transition-all flex items-center gap-2 backdrop-blur-md shadow-lg hover:shadow-rose-600/20 border border-slate-700 hover:border-transparent">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i> Pick Another Genre
+            </button>
         </div>
 
     </main>
 
-    <footer class="p-6 text-center text-slate-600 text-sm border-t border-slate-900 mt-auto">
-        <p id="footerText">Movie data provided by The Movie Database (TMDB).</p>
+    <footer class="p-8 text-center border-t border-slate-800/50 bg-slate-900/60 backdrop-blur-md mt-auto">
+        <p class="text-slate-500 font-medium">Arnav Dugad © 2025</p>
+        <p class="text-xs text-slate-600 mt-2">Data provided by TMDB. Not endorsed by TMDB.</p>
     </footer>
 
     <script>
         // --- CONSTANTS & CONFIG ---
         const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
-        const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
-        // Hardcoded API Key provided by user
-        const apiKey = "2b834d5234781ad70bd646922e9ddd18";
+        const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w780"; // Higher quality for bg
+        const API_KEY = "2b834d5234781ad70bd646922e9ddd18";
 
         const GENRE_MAP = {
             'Action': { id: 28, icon: 'clapperboard' },
             'Comedy': { id: 35, icon: 'popcorn' },
             'Drama': { id: 18, icon: 'tv' },
-            'Sci-Fi': { id: 878, icon: 'film' },
+            'Sci-Fi': { id: 878, icon: 'rocket' },
             'Horror': { id: 27, icon: 'ghost' }, 
-            'Romance': { id: 10749, icon: 'heart' }
+            'Romance': { id: 10749, icon: 'heart' },
+            'Thriller': { id: 53, icon: 'eye' },
+            'Animation': { id: 16, icon: 'smile' }
         };
 
         // --- STATE ---
         let selectedGenre = null;
+        let currentMovie = null;
 
         // --- DOM ELEMENTS ---
         const views = {
@@ -161,17 +293,34 @@
             loading: document.getElementById('loadingView'),
             result: document.getElementById('resultView')
         };
-        const welcomeText = document.getElementById('welcomeText');
-        const footerText = document.getElementById('footerText');
         const genreGrid = document.getElementById('genreGrid');
         const errorToast = document.getElementById('errorToast');
         const errorText = document.getElementById('errorText');
-        const resetBtn = document.getElementById('resetBtn');
+        const dynamicBg = document.getElementById('dynamic-bg');
+        
+        // Inputs
+        const decadeFilter = document.getElementById('decadeFilter');
+        const ratingFilter = document.getElementById('ratingFilter');
+        const runtimeFilter = document.getElementById('runtimeFilter');
 
         // --- INITIALIZATION ---
         function init() {
             renderGenreButtons();
             lucide.createIcons();
+            
+            // Event Listeners
+            document.getElementById('resetBtn').addEventListener('click', resetApp);
+            document.getElementById('logoBtn').addEventListener('click', resetApp);
+            document.getElementById('shareBtn').addEventListener('click', shareMovie);
+            
+            setupSwipeGestures();
+        }
+
+        function resetApp() {
+            switchView('selection');
+            selectedGenre = null;
+            // Reset background
+            dynamicBg.style.backgroundImage = 'none';
         }
 
         // --- GENRE RENDERING ---
@@ -179,13 +328,14 @@
             genreGrid.innerHTML = '';
             Object.keys(GENRE_MAP).forEach(genre => {
                 const btn = document.createElement('button');
-                btn.className = "relative overflow-hidden group p-6 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-3 shadow-lg bg-slate-800 text-slate-200 hover:bg-slate-700 hover:shadow-rose-500/20";
+                btn.className = "relative overflow-hidden group p-6 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-3 shadow-lg bg-slate-800 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:border-rose-500/50 hover:shadow-rose-500/20";
                 
                 // Icon Logic
                 let iconHtml = '';
-                if (genre === 'Horror') iconHtml = '<div class="text-3xl z-10 mb-1">👻</div>';
-                else if (genre === 'Romance') iconHtml = '<div class="text-3xl z-10 mb-1">❤️</div>';
-                else iconHtml = `<i data-lucide="${GENRE_MAP[genre].icon}" class="w-8 h-8 z-10 mb-1 opacity-80 group-hover:opacity-100 transition-opacity"></i>`;
+                if (genre === 'Horror') iconHtml = '<div class="text-4xl z-10 mb-1 filter drop-shadow-lg">👻</div>';
+                else if (genre === 'Romance') iconHtml = '<div class="text-4xl z-10 mb-1 filter drop-shadow-lg">❤️</div>';
+                else if (genre === 'Animation') iconHtml = '<div class="text-4xl z-10 mb-1 filter drop-shadow-lg">🎨</div>';
+                else iconHtml = `<i data-lucide="${GENRE_MAP[genre].icon}" class="w-10 h-10 z-10 mb-1 opacity-80 group-hover:opacity-100 transition-opacity text-rose-500"></i>`;
 
                 btn.innerHTML = `
                     <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -203,7 +353,6 @@
             Object.values(views).forEach(el => el.classList.add('hidden'));
             views[viewName].classList.remove('hidden');
             if(viewName === 'result') {
-                 // Trigger Lucide on result view since it was hidden
                  setTimeout(() => lucide.createIcons(), 50);
             }
         }
@@ -214,11 +363,12 @@
             switchView('loading');
             errorToast.classList.add('hidden');
 
-            const loadingPhrases = ["Scanning library...", "Checking ratings...", "Popping corn...", "Found one!"];
+            // Animation Text
+            const loadingPhrases = ["Scanning library...", "Checking ratings...", "Analyzing decades...", "Found a gem!"];
             let i = 0;
             const loadingTextEl = document.getElementById('loadingText');
             const subtextEl = document.getElementById('loadingSubtext');
-            subtextEl.textContent = 'Querying TMDB...';
+            subtextEl.textContent = 'Curating based on your filters...';
             
             const textInterval = setInterval(() => {
                 loadingTextEl.textContent = loadingPhrases[i % loadingPhrases.length];
@@ -226,78 +376,184 @@
             }, 600);
 
             try {
-                // Always fetch from API
-                const [apiResult] = await Promise.all([
-                    fetchMovieFromTMDB(GENRE_MAP[genre].id),
-                    new Promise(r => setTimeout(r, 1500)) // Min wait time for UX
-                ]);
+                // 1. Fetch Basic Movie
+                const movieBasic = await fetchMovieFromTMDB(GENRE_MAP[genre].id);
                 
+                // 2. Fetch Detailed Info (Credits, Videos)
+                const movieDetails = await getMovieDetails(movieBasic.id);
+                
+                // Merge data
+                const fullMovieData = { ...movieBasic, ...movieDetails };
+                currentMovie = fullMovieData;
+
                 clearInterval(textInterval);
-                displayResult(apiResult);
+                displayResult(fullMovieData);
 
             } catch (err) {
                 clearInterval(textInterval);
                 console.error(err);
-                showError("Could not fetch movie data. Please check your internet connection.");
+                showError("No movies found matching these specific filters. Try broadening your search!");
                 switchView('selection');
             }
         }
 
         async function fetchMovieFromTMDB(genreId) {
-            const randomPage = Math.floor(Math.random() * 20) + 1;
-            const url = `${TMDB_API_BASE_URL}/discover/movie?api_key=${apiKey}&with_genres=${genreId}&sort_by=popularity.desc&vote_count.gte=100&vote_average.gte=6.0&page=${randomPage}&language=en-US&include_adult=false`;
+            // Build Filter Params
+            let params = `&with_genres=${genreId}`;
+            
+            // Decade Logic
+            const decade = decadeFilter.value;
+            if (decade === 'old') {
+                params += `&primary_release_date.lte=1969-12-31`;
+            } else if (decade) {
+                params += `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade)+9}-12-31`;
+            }
+
+            // Rating Logic
+            const rating = ratingFilter.value;
+            if (rating) {
+                params += `&vote_average.gte=${rating}`;
+            } else {
+                params += `&vote_average.gte=6.0`; // Default min
+            }
+
+            // Runtime Logic
+            const runtime = runtimeFilter.value;
+            if (runtime === 'short') params += `&with_runtime.lte=90`;
+            else if (runtime === 'standard') params += `&with_runtime.gte=90&with_runtime.lte=120`;
+            else if (runtime === 'epic') params += `&with_runtime.gte=120`;
+
+            const randomPage = Math.floor(Math.random() * 10) + 1;
+            const url = `${TMDB_API_BASE_URL}/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc&vote_count.gte=300&page=${randomPage}&language=en-US&include_adult=false${params}`;
             
             const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch from TMDB");
-            
             const data = await response.json();
-            const results = data.results;
             
-            if (!results || results.length === 0) throw new Error("No movies found");
+            if (!data.results || data.results.length === 0) throw new Error("No movies found");
             
-            const randomMovie = results[Math.floor(Math.random() * results.length)];
-            
-            return {
-                title: randomMovie.title,
-                year: randomMovie.release_date ? randomMovie.release_date.split('-')[0] : 'N/A',
-                rating: randomMovie.vote_average.toFixed(1),
-                plot: randomMovie.overview,
-                poster_path: randomMovie.poster_path
-            };
+            const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
+            return randomMovie;
+        }
+
+        async function getMovieDetails(movieId) {
+            const url = `${TMDB_API_BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits,videos`;
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
         }
 
         function displayResult(movie) {
-            document.getElementById('resultGenreLabel').textContent = `Your ${selectedGenre} Pick`;
+            document.getElementById('resultGenreLabel').textContent = `${selectedGenre} • ${movie.release_date ? movie.release_date.split('-')[0] : ''}`;
             document.getElementById('movieTitle').textContent = movie.title;
-            document.getElementById('movieRating').textContent = movie.rating;
-            document.getElementById('movieYear').textContent = movie.year;
-            document.getElementById('moviePlot').textContent = movie.plot || "No description available.";
+            document.getElementById('movieRating').textContent = movie.vote_average.toFixed(1);
+            document.getElementById('movieYear').textContent = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+            document.getElementById('movieRuntime').textContent = movie.runtime ? `${movie.runtime} min` : 'N/A';
+            document.getElementById('moviePlot').textContent = movie.overview || "No description available.";
 
+            // Director
+            const director = movie.credits?.crew?.find(p => p.job === 'Director');
+            document.getElementById('movieDirector').textContent = director ? `Dir. ${director.name}` : '';
+
+            // Cast (Top 3)
+            const castContainer = document.getElementById('movieCast');
+            castContainer.innerHTML = '';
+            const topCast = movie.credits?.cast?.slice(0, 3) || [];
+            topCast.forEach(actor => {
+                const chip = document.createElement('span');
+                chip.className = "bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-medium border border-slate-700";
+                chip.textContent = actor.name;
+                castContainer.appendChild(chip);
+            });
+
+            // Links
+            const trailer = movie.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+            const trailerBtn = document.getElementById('trailerLink');
+            if (trailer) {
+                trailerBtn.href = `https://www.youtube.com/watch?v=${trailer.key}`;
+                trailerBtn.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                trailerBtn.removeAttribute('href');
+                trailerBtn.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            document.getElementById('watchLink').href = `https://www.justwatch.com/us/search?q=${encodeURIComponent(movie.title)}`;
+            document.getElementById('tmdbLink').href = `https://www.themoviedb.org/movie/${movie.id}`;
+
+            // Images
             const posterImg = document.getElementById('moviePoster');
             const posterFallback = document.getElementById('moviePosterFallback');
-
             if (movie.poster_path) {
                 posterImg.src = `${TMDB_IMAGE_BASE_URL}${movie.poster_path}`;
                 posterImg.classList.remove('hidden');
                 posterFallback.classList.add('hidden');
+                
+                // Set Background
+                dynamicBg.style.backgroundImage = `url('${TMDB_IMAGE_BASE_URL}${movie.poster_path}')`;
             } else {
                 posterImg.classList.add('hidden');
                 posterFallback.classList.remove('hidden');
+                dynamicBg.style.backgroundImage = 'none';
             }
 
             switchView('result');
+        }
+
+        function shareMovie() {
+            if (!currentMovie) return;
+            const text = `MoviePicker suggested I watch "${currentMovie.title}" (${currentMovie.release_date.split('-')[0]}) tonight! 🍿`;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('shareBtn');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="check" class="w-5 h-5 text-green-400"></i> Copied!`;
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        // --- SWIPE GESTURES ---
+        function setupSwipeGestures() {
+            const card = document.getElementById('swipeCard');
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            card.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+
+            card.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            });
+
+            function handleSwipeGesture() {
+                const diff = touchEndX - touchStartX;
+                const threshold = 70; // min distance
+
+                if (Math.abs(diff) < threshold) return;
+
+                if (diff < 0) {
+                    // Swipe Left (Reject/Back)
+                    resetApp();
+                } else {
+                    // Swipe Right (Keep/Like)
+                    // Trigger Heart Animation
+                    const heart = document.getElementById('likeAnimation');
+                    heart.classList.remove('animate-heart');
+                    void heart.offsetWidth; // trigger reflow
+                    heart.classList.add('animate-heart');
+                    
+                    // Share automatically on like
+                    shareMovie(); 
+                }
+            }
         }
 
         function showError(msg) {
             errorText.textContent = msg;
             errorToast.classList.remove('hidden');
         }
-
-        // --- EVENT LISTENERS ---
-        resetBtn.addEventListener('click', () => {
-            switchView('selection');
-            selectedGenre = null;
-        });
 
         // Run Init
         init();
