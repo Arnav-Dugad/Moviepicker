@@ -15,14 +15,13 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Custom Scrollbar (Hidden but functional) */
+        /* Custom Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Animations */
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
         .animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -34,13 +33,13 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
-        .glass-dark {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
 
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
         /* Dynamic Background */
         #dynamic-bg {
             position: absolute;
@@ -66,7 +65,7 @@
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
         .aspect-video-container iframe {
             position: absolute;
@@ -76,8 +75,13 @@
             height: 100%;
         }
 
-        /* Utility */
-        .hidden { display: none !important; }
+        /* Search Dropdown Animation */
+        #searchResults {
+            transition: all 0.2s ease-in-out;
+            transform-origin: top;
+        }
+        
+        /* Text Shadow */
         .text-shadow { text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
     </style>
 </head>
@@ -89,19 +93,19 @@
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
 
     <!-- Header (Fixed Top) -->
-    <header class="fixed top-0 left-0 right-0 z-50 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
-        <button id="logoBtn" class="flex items-center gap-2 group focus:outline-none">
+    <header class="fixed top-0 left-0 right-0 z-50 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <div class="pointer-events-auto flex items-center gap-2 group cursor-pointer" id="logoBtn">
             <div class="p-1.5 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/30 group-hover:scale-105 transition-transform">
                 <i data-lucide="clapperboard" class="text-white w-5 h-5"></i>
             </div>
-            <span class="text-xl font-black tracking-tighter text-white drop-shadow-md">
+            <span class="text-xl font-black tracking-tighter text-white drop-shadow-md hidden md:block">
                 Watch<span class="text-rose-500">Next</span>
             </span>
-        </button>
+        </div>
         
-        <div class="flex items-center bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10">
-            <button id="modeMovie" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg">Movies</button>
-            <button id="modeTV" class="px-4 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all">TV</button>
+        <div class="pointer-events-auto flex items-center bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-xl">
+            <button id="modeMovie" class="px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105">Movies</button>
+            <button id="modeTV" class="px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105">TV</button>
         </div>
     </header>
 
@@ -116,51 +120,73 @@
         </div>
 
         <!-- VIEW 1: SELECTION (Scrollable content area) -->
-        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pt-20 pb-10 px-4 flex flex-col items-center">
+        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pt-24 pb-10 px-4 flex flex-col items-center">
             
-            <div class="text-center mb-8 mt-4 md:mt-10 animate-fade-in">
-                <h2 class="text-3xl md:text-5xl font-black text-white mb-2 text-shadow">Find your next <span class="text-rose-500">obsession</span>.</h2>
-                <p id="modeDescription" class="text-slate-300 text-sm md:text-base font-medium opacity-80">Browsing Movies</p>
+            <div class="text-center mb-8 mt-4 animate-fade-in w-full max-w-3xl">
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-3 text-shadow tracking-tight">Find your next <span class="text-rose-500">obsession</span>.</h2>
+                <p id="modeDescription" class="text-slate-300 text-base md:text-lg font-medium opacity-80 mb-8">Browsing Movies</p>
+                
+                <!-- Search Bar -->
+                <div class="relative w-full max-w-lg mx-auto z-50">
+                    <div class="glass-panel rounded-full flex items-center px-5 py-4 shadow-2xl focus-within:ring-2 focus-within:ring-rose-500 transition-all group">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400 mr-3 group-focus-within:text-white transition-colors"></i>
+                        <input type="text" id="searchInput" placeholder="Search for movies or series..." class="bg-transparent border-none text-white placeholder-slate-400 text-base w-full focus:outline-none">
+                        <button id="clearSearch" class="hidden text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <!-- Search Results Dropdown -->
+                    <div id="searchResults" class="absolute top-full left-0 right-0 mt-3 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl hidden max-h-[50vh] overflow-y-auto custom-scroll z-50">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
             </div>
 
             <!-- Filters Bar -->
-            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 animate-fade-in" style="animation-delay: 0.1s">
-                <div class="glass rounded-xl p-2">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-2 mb-1">Era</label>
-                    <select id="decadeFilter" class="w-full bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer">
-                        <option value="" class="bg-slate-900">Any Time</option>
-                        <option value="2024" class="bg-slate-900">New (2024-25)</option>
-                        <option value="2020" class="bg-slate-900">2020s</option>
-                        <option value="2010" class="bg-slate-900">2010s</option>
-                        <option value="2000" class="bg-slate-900">2000s</option>
-                        <option value="1990" class="bg-slate-900">90s Classics</option>
-                        <option value="1980" class="bg-slate-900">80s Retro</option>
-                    </select>
+            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Era</label>
+                    <div class="relative">
+                        <select id="decadeFilter" class="w-full bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="" class="bg-slate-900">Any Time</option>
+                            <option value="2024" class="bg-slate-900">New (2024-25)</option>
+                            <option value="2020" class="bg-slate-900">2020s</option>
+                            <option value="2010" class="bg-slate-900">2010s</option>
+                            <option value="2000" class="bg-slate-900">2000s</option>
+                            <option value="1990" class="bg-slate-900">90s Classics</option>
+                            <option value="1980" class="bg-slate-900">80s Retro</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-1 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
                 </div>
-                <div class="glass rounded-xl p-2">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-2 mb-1">Language</label>
-                    <select id="languageFilter" class="w-full bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer">
-                        <option value="en" class="bg-slate-900">English</option>
-                        <option value="hi" class="bg-slate-900">Hindi</option>
-                        <option value="kn" class="bg-slate-900">Kannada</option>
-                        <option value="ta" class="bg-slate-900">Tamil</option>
-                        <option value="te" class="bg-slate-900">Telugu</option>
-                        <option value="ml" class="bg-slate-900">Malayalam</option>
-                        <option value="ko" class="bg-slate-900">Korean</option>
-                        <option value="ja" class="bg-slate-900">Japanese</option>
-                        <option value="" class="bg-slate-900">All Languages</option>
-                    </select>
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Language</label>
+                    <div class="relative">
+                        <select id="languageFilter" class="w-full bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="en" class="bg-slate-900">English</option>
+                            <option value="hi" class="bg-slate-900">Hindi</option>
+                            <option value="kn" class="bg-slate-900">Kannada</option>
+                            <option value="ta" class="bg-slate-900">Tamil</option>
+                            <option value="te" class="bg-slate-900">Telugu</option>
+                            <option value="ml" class="bg-slate-900">Malayalam</option>
+                            <option value="ko" class="bg-slate-900">Korean</option>
+                            <option value="ja" class="bg-slate-900">Japanese</option>
+                            <option value="" class="bg-slate-900">All Languages</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-1 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
                 </div>
-                <div class="glass rounded-xl p-2">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-2 mb-1">Sort</label>
-                    <select id="sortFilter" class="w-full bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer">
-                        <option value="popularity.desc" class="bg-slate-900">Popularity</option>
-                        <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
-                        <option value="revenue.desc" class="bg-slate-900">Box Office</option>
-                        <option value="primary_release_date.desc" class="bg-slate-900">Newest First</option>
-                    </select>
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Sort</label>
+                    <div class="relative">
+                        <select id="sortFilter" class="w-full bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="popularity.desc" class="bg-slate-900">Popularity</option>
+                            <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
+                            <option value="revenue.desc" class="bg-slate-900">Box Office</option>
+                            <option value="primary_release_date.desc" class="bg-slate-900">Newest First</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-1 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
                 </div>
-                <button id="surpriseBtn" class="bg-gradient-to-br from-purple-600 to-rose-600 rounded-xl p-2 flex flex-col items-center justify-center text-white font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-rose-600/20 group">
+                <button id="surpriseBtn" class="bg-gradient-to-br from-purple-600 to-rose-600 rounded-xl p-2 flex flex-col items-center justify-center text-white font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-rose-600/20 group cursor-pointer border border-white/10">
                     <i data-lucide="sparkles" class="w-4 h-4 mb-1 group-hover:animate-spin"></i>
                     <span class="text-xs">Surprise Me</span>
                 </button>
@@ -183,100 +209,91 @@
         </div>
 
         <!-- VIEW 3: RESULT (Full Screen Immersive) -->
-        <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full overflow-hidden bg-black/40">
+        <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full overflow-hidden bg-black/80">
             
             <!-- Close / Back Button (Mobile) -->
-            <button onclick="resetApp()" class="md:hidden absolute top-4 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            <button onclick="resetApp()" class="md:hidden absolute top-4 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
             </button>
 
-            <!-- LEFT/TOP: Visuals (Background is managed by body, this is for trailers) -->
-            <div class="w-full md:w-1/2 h-[40vh] md:h-full flex items-center justify-center relative p-0 md:p-10">
-                <!-- Trailer Embed Area -->
-                <div id="trailerArea" class="w-full max-w-2xl aspect-video-container hidden md:block shadow-2xl border border-white/10">
-                    <!-- Trailer injected here -->
+            <!-- LEFT/TOP: Permanent Poster Area -->
+            <div class="w-full md:w-5/12 h-[50vh] md:h-full relative bg-black flex-shrink-0 border-r border-white/5">
+                <div id="posterArea" class="w-full h-full relative">
+                    <!-- Poster injected here via JS -->
                 </div>
-                <!-- Mobile Gradient -->
+                <!-- Gradient Overlay for Mobile Text Readability -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent md:hidden pointer-events-none"></div>
             </div>
 
-            <!-- RIGHT/BOTTOM: Details (Scrollable Panel) -->
-            <div class="w-full md:w-1/2 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-l from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar">
+            <!-- RIGHT/BOTTOM: Details & Trailer -->
+            <div class="w-full md:w-7/12 h-[50vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative">
                 
-                <div class="mt-auto p-6 md:p-12 md:max-w-2xl">
-                    <!-- Genre & Status -->
-                    <div class="flex items-center gap-2 mb-2">
-                        <span id="resGenre" class="text-[10px] md:text-xs font-bold tracking-widest text-rose-500 uppercase">Action</span>
-                        <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                        <span id="resYear" class="text-[10px] md:text-xs font-medium text-slate-300">2024</span>
-                        <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                        <span id="resRating" class="flex items-center gap-1 text-[10px] md:text-xs font-bold text-yellow-400">
-                            <i data-lucide="star" class="w-3 h-3 fill-current"></i> 8.5
-                        </span>
+                <div class="p-6 md:p-10 md:pt-16 max-w-4xl mx-auto w-full">
+                    
+                    <!-- Header Info -->
+                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                        <span id="resGenre" class="text-xs font-bold tracking-widest text-rose-500 uppercase border border-rose-500/30 px-2 py-0.5 rounded">Action</span>
+                        <span id="resYear" class="text-xs font-bold text-slate-300">2024</span>
+                        <div class="flex items-center gap-1 text-xs font-bold text-yellow-400">
+                            <i data-lucide="star" class="w-3 h-3 fill-current"></i> <span id="resRating">8.5</span>
+                        </div>
                     </div>
 
                     <!-- Title -->
                     <h1 id="resTitle" class="text-3xl md:text-5xl font-black text-white leading-tight mb-2 text-shadow">Movie Title</h1>
-                    <p id="resTagline" class="text-sm md:text-base text-slate-400 italic mb-4 md:mb-6 font-light">"The tagline goes here"</p>
+                    <p id="resTagline" class="text-sm md:text-lg text-slate-400 italic mb-6 font-light border-l-2 border-rose-500 pl-3">"The tagline goes here"</p>
 
-                    <!-- Mobile Play Button (Since trailer is hidden on small mobile views by default layout) -->
-                    <button id="mobileTrailerBtn" class="md:hidden w-full bg-white text-black py-3 rounded-xl font-bold mb-6 flex items-center justify-center gap-2 shadow-lg" onclick="showMobileTrailer()">
-                        <i data-lucide="play" class="w-4 h-4 fill-current"></i> Watch Trailer
-                    </button>
-
-                    <!-- Metadata -->
-                    <div class="flex flex-wrap gap-3 mb-6">
-                        <div class="glass px-3 py-1 rounded-md text-xs font-medium text-white flex items-center gap-1">
+                    <!-- Metadata Chips -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1">
                             <i data-lucide="clock" class="w-3 h-3"></i> <span id="resRuntime">120m</span>
                         </div>
-                        <div class="glass px-3 py-1 rounded-md text-xs font-medium text-white uppercase" id="resLang">EN</div>
-                        <div class="glass px-3 py-1 rounded-md text-xs font-medium text-green-400" id="resStatus">Released</div>
+                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white uppercase" id="resLang">EN</div>
+                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-green-400" id="resStatus">Released</div>
                     </div>
 
                     <!-- Plot -->
-                    <p id="resPlot" class="text-slate-300 text-sm md:text-base leading-relaxed mb-6 font-light opacity-90">
+                    <p id="resPlot" class="text-slate-300 text-sm md:text-base leading-relaxed mb-6 font-light">
                         Detailed plot summary goes here...
                     </p>
 
+                    <!-- INLINE TRAILER (New Location) -->
+                    <div id="inlineTrailer" class="w-full aspect-video-container mb-8 hidden border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                        <!-- Iframe injected here -->
+                    </div>
+
                     <!-- Providers -->
                     <div id="providersArea" class="mb-6 hidden">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Stream On</h4>
-                        <div id="providerIcons" class="flex flex-wrap gap-2"></div>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="tv" class="w-3 h-3"></i> Stream On</h4>
+                        <div id="providerIcons" class="flex flex-wrap gap-3"></div>
                     </div>
 
                     <!-- Cast -->
                     <div class="mb-6">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Starring</h4>
-                        <div id="castList" class="flex gap-3 overflow-x-auto no-scrollbar pb-2"></div>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="users" class="w-3 h-3"></i> Starring</h4>
+                        <div id="castList" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 mask-gradient-right"></div>
                     </div>
 
                     <!-- Recommendations -->
-                    <div id="recsArea" class="mb-8 hidden">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">You Might Also Like</h4>
+                    <div id="recsArea" class="mb-24 md:mb-12 hidden">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="thumbs-up" class="w-3 h-3"></i> You Might Like</h4>
                         <div id="recsList" class="flex gap-3 overflow-x-auto no-scrollbar pb-2"></div>
                     </div>
-
-                    <!-- Bottom Actions (Sticky) -->
-                    <div class="flex gap-3 pt-4 sticky bottom-0 bg-black/80 backdrop-blur-lg md:bg-transparent md:backdrop-filter-none pb-4 md:pb-0 z-20">
-                         <button onclick="resetApp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-all border border-white/10">
-                            Reject
-                        </button>
-                        <a id="streamLink" href="#" target="_blank" class="flex-[2] bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
-                            <i data-lucide="tv" class="w-4 h-4"></i> Stream Now
-                        </a>
-                        <button onclick="shareContent()" class="w-12 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10">
-                            <i data-lucide="share-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
                 </div>
-            </div>
 
-            <!-- Mobile Video Modal -->
-            <div id="mobileVideoModal" class="hidden absolute inset-0 z-[60] bg-black flex flex-col justify-center">
-                 <button onclick="closeMobileTrailer()" class="absolute top-4 right-4 text-white p-2 bg-slate-800 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
-                 <div class="w-full aspect-video-container">
-                     <div id="mobileVideoFrame"></div>
-                 </div>
+                <!-- Sticky Bottom Bar -->
+                <div class="sticky bottom-0 bg-black/90 backdrop-blur-lg border-t border-white/10 p-4 md:p-6 flex gap-3 z-20 mt-auto">
+                     <button onclick="resetApp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 md:py-4 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2">
+                        <i data-lucide="x" class="w-4 h-4"></i> <span class="hidden md:inline">Reject</span>
+                    </button>
+                    <a id="streamLink" href="#" target="_blank" class="flex-[2] bg-rose-600 hover:bg-rose-500 text-white py-3 md:py-4 rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 hover:scale-[1.02]">
+                        <i data-lucide="play-circle" class="w-5 h-5"></i> Stream Now
+                    </a>
+                    <button onclick="shareContent()" class="w-14 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
             </div>
 
         </div>
@@ -288,7 +305,7 @@
         const API_KEY = "2b834d5234781ad70bd646922e9ddd18";
         const BASE_URL = "https://api.themoviedb.org/3";
         const IMG_URL = "https://image.tmdb.org/t/p/original";
-        const POSTER_URL = "https://image.tmdb.org/t/p/w500";
+        const POSTER_URL = "https://image.tmdb.org/t/p/w780";
         const PROFILE_URL = "https://image.tmdb.org/t/p/w185";
 
         const STREAM_URLS = {
@@ -323,7 +340,7 @@
         // --- STATE ---
         let currentMode = 'movie'; // 'movie' or 'tv'
         let currentItem = null;
-        let currentTrailerKey = null;
+        let searchTimeout = null;
 
         // --- INIT ---
         function init() {
@@ -338,14 +355,24 @@
             document.getElementById('modeMovie').onclick = () => switchMode('movie');
             document.getElementById('modeTV').onclick = () => switchMode('tv');
             document.getElementById('surpriseBtn').onclick = surpriseMe;
+            
+            // Search Listeners
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', handleSearch);
+            document.getElementById('clearSearch').onclick = () => {
+                searchInput.value = '';
+                document.getElementById('searchResults').classList.add('hidden');
+                document.getElementById('clearSearch').classList.add('hidden');
+            };
         }
 
         // --- NAVIGATION ---
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('modeMovie').className = mode === 'movie' ? "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-4 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all";
-            document.getElementById('modeTV').className = mode === 'tv' ? "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-4 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all";
+            document.getElementById('modeMovie').className = mode === 'movie' ? "px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105" : "px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105";
+            document.getElementById('modeTV').className = mode === 'tv' ? "px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105" : "px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105";
             document.getElementById('modeDescription').textContent = mode === 'movie' ? "Browsing Movies" : "Browsing TV Series";
+            document.getElementById('searchInput').placeholder = mode === 'movie' ? "Search for movies..." : "Search for TV series...";
             renderGenres();
             lucide.createIcons();
         }
@@ -353,7 +380,9 @@
         function resetApp() {
             document.getElementById('resultView').classList.add('hidden');
             document.getElementById('genreSelectionView').classList.remove('hidden');
-            document.getElementById('trailerArea').innerHTML = '';
+            // Clear result visuals
+            document.getElementById('posterArea').innerHTML = '';
+            document.getElementById('inlineTrailer').innerHTML = '';
             document.getElementById('dynamic-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg')`;
         }
 
@@ -382,6 +411,64 @@
                 btn.onclick = () => fetchContent(data.id);
                 grid.appendChild(btn);
             });
+        }
+
+        // --- SEARCH LOGIC ---
+        function handleSearch(e) {
+            const query = e.target.value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            const clearBtn = document.getElementById('clearSearch');
+            
+            if(query.length > 0) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                resultsDiv.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`${BASE_URL}/search/${currentMode}?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`);
+                    const data = await res.json();
+                    
+                    if (data.results && data.results.length > 0) {
+                        resultsDiv.innerHTML = '';
+                        resultsDiv.classList.remove('hidden');
+                        
+                        data.results.slice(0, 8).forEach(item => {
+                            if(!item.poster_path && !item.backdrop_path) return;
+                            
+                            const div = document.createElement('div');
+                            div.className = "flex items-center gap-4 p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 transition-colors";
+                            const img = item.poster_path ? `${POSTER_URL}${item.poster_path}` : 'https://via.placeholder.com/50x75?text=No+Img';
+                            const title = item.title || item.name;
+                            const year = (item.release_date || item.first_air_date || '').split('-')[0];
+                            
+                            div.innerHTML = `
+                                <img src="${img}" class="w-12 h-16 object-cover rounded-md shadow-md">
+                                <div class="flex flex-col text-left">
+                                    <span class="text-sm font-bold text-white leading-tight mb-1">${title}</span>
+                                    <span class="text-xs text-slate-400 font-medium">${year}</span>
+                                </div>
+                            `;
+                            div.onclick = () => {
+                                loadItemDetails(item.id);
+                                document.getElementById('searchInput').value = '';
+                                resultsDiv.classList.add('hidden');
+                            };
+                            resultsDiv.appendChild(div);
+                        });
+                    } else {
+                        resultsDiv.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No results found</div>';
+                        resultsDiv.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }, 300); // 300ms debounce
         }
 
         // --- FETCH LOGIC ---
@@ -428,6 +515,7 @@
         }
 
         async function loadItemDetails(id) {
+            showLoading(true);
             try {
                 const res = await fetch(`${BASE_URL}/${currentMode}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers,recommendations`);
                 const item = await res.json();
@@ -450,7 +538,7 @@
             document.getElementById('resTitle').textContent = title;
             document.getElementById('resTagline').textContent = item.tagline || '';
             document.getElementById('resYear').textContent = year;
-            document.getElementById('resRating').innerHTML = `<i data-lucide="star" class="w-3 h-3 fill-current text-yellow-400"></i> ${item.vote_average.toFixed(1)}`;
+            document.getElementById('resRating').innerHTML = `${item.vote_average.toFixed(1)}`;
             document.getElementById('resRuntime').textContent = `${runtime} min`;
             document.getElementById('resLang').textContent = (item.original_language || 'en').toUpperCase();
             document.getElementById('resPlot').textContent = item.overview;
@@ -463,19 +551,26 @@
                 document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${bgPath}')`;
             }
 
-            // Trailer
-            const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
-            const trailerArea = document.getElementById('trailerArea');
-            if(trailer) {
-                currentTrailerKey = trailer.key;
-                // Simple embed to fix Error 153. No enablejsapi, simple standard embed.
-                const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0`;
-                trailerArea.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                document.getElementById('mobileTrailerBtn').classList.remove('hidden');
+            // 1. LEFT SIDE: Permanent Poster
+            const posterArea = document.getElementById('posterArea');
+            if(item.poster_path) {
+                posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover shadow-2xl">`;
             } else {
-                currentTrailerKey = null;
-                trailerArea.innerHTML = `<div class="w-full h-full flex items-center justify-center text-slate-500 glass"><p>No Trailer Available</p></div>`;
-                document.getElementById('mobileTrailerBtn').classList.add('hidden');
+                posterArea.innerHTML = `<div class="w-full h-full bg-black flex items-center justify-center text-slate-600"><p>No Poster</p></div>`;
+            }
+
+            // 2. RIGHT SIDE: Inline Trailer
+            const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser' || v.type === 'Clip'));
+            const inlineTrailer = document.getElementById('inlineTrailer');
+            
+            if(trailer) {
+                inlineTrailer.classList.remove('hidden');
+                // Auto-play, Muted initially for better UX
+                const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0`;
+                inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                inlineTrailer.classList.add('hidden');
+                inlineTrailer.innerHTML = '';
             }
 
             // Providers
@@ -487,7 +582,6 @@
             if(provs && (provs.flatrate || provs.buy || provs.rent)) {
                 provArea.classList.remove('hidden');
                 const methods = [...(provs.flatrate||[]), ...(provs.buy||[]), ...(provs.rent||[])];
-                // Unique
                 const unique = new Map();
                 methods.forEach(p => unique.set(p.provider_id, p));
                 
@@ -496,7 +590,7 @@
                     const searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.google.com/search?q=watch ${encodeURIComponent(title)} ${p.provider_name}`;
                     a.href = searchUrl;
                     a.target = "_blank";
-                    a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer" title="${p.provider_name}">`;
+                    a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="${p.provider_name}">`;
                     provList.appendChild(a);
                 });
             } else {
@@ -508,18 +602,18 @@
             castList.innerHTML = '';
             (item.credits?.cast || []).slice(0, 8).forEach(c => {
                const div = document.createElement('div');
-               div.className = "flex flex-col items-center min-w-[60px] gap-1";
+               div.className = "flex flex-col items-center min-w-[64px] gap-2 group/cast";
                const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
                div.innerHTML = `
-                   <a href="https://www.google.com/search?q=${encodeURIComponent(c.name)}" target="_blank">
-                    <img src="${img}" class="w-12 h-12 rounded-full object-cover border border-white/10 hover:border-rose-500 transition-colors shadow-sm">
+                   <a href="https://www.google.com/search?q=${encodeURIComponent(c.name)}" target="_blank" class="block w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-rose-500 transition-all shadow-md">
+                    <img src="${img}" class="w-full h-full object-cover group-hover/cast:scale-110 transition-transform duration-500">
                    </a>
-                   <span class="text-[10px] text-slate-400 text-center truncate w-full">${c.name}</span>
+                   <span class="text-[10px] text-slate-400 font-bold text-center truncate w-full group-hover/cast:text-white transition-colors">${c.name}</span>
                `;
                castList.appendChild(div);
             });
 
-            // Recommendations (In-App Click)
+            // Recommendations
             const recs = item.recommendations?.results || [];
             const recsArea = document.getElementById('recsArea');
             const recsList = document.getElementById('recsList');
@@ -530,13 +624,13 @@
                 recs.slice(0, 8).forEach(r => {
                     if(!r.poster_path) return;
                     const div = document.createElement('div');
-                    div.className = "relative min-w-[80px] h-[120px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform border border-white/10";
-                    div.innerHTML = `<img src="${POSTER_URL}${r.poster_path}" class="w-full h-full object-cover">`;
-                    // RECURSIVE LOAD
+                    div.className = "relative min-w-[90px] h-[135px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform border border-white/10 shadow-lg group/rec";
+                    div.innerHTML = `
+                        <img src="${POSTER_URL}${r.poster_path}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/rec:opacity-100 transition-opacity"></div>
+                    `;
                     div.onclick = () => {
-                        showLoading(true);
-                        // Small timeout to allow UI to show loading state
-                        setTimeout(() => loadItemDetails(r.id), 100);
+                        loadItemDetails(r.id);
                     };
                     recsList.appendChild(div);
                 });
@@ -544,7 +638,7 @@
                 recsArea.classList.add('hidden');
             }
 
-            // Stream Button
+            // Stream Button Link
             document.getElementById('streamLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
 
             // Switch Views
@@ -578,19 +672,6 @@
                 navigator.clipboard.writeText(text);
                 showError("Copied to clipboard!");
             }
-        }
-
-        // Mobile Video Logic
-        function showMobileTrailer() {
-            if(!currentTrailerKey) return;
-            const modal = document.getElementById('mobileVideoModal');
-            const frame = document.getElementById('mobileVideoFrame');
-            frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentTrailerKey}?autoplay=1&controls=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
-            modal.classList.remove('hidden');
-        }
-        function closeMobileTrailer() {
-            document.getElementById('mobileVideoModal').classList.add('hidden');
-            document.getElementById('mobileVideoFrame').innerHTML = '';
         }
 
         function fireConfetti() {
