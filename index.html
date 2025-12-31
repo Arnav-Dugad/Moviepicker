@@ -5,6 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>WatchNext: Ultimate Picker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: 'var(--brand)',
+                        branddark: 'var(--brand-dark)',
+                    },
+                    animation: {
+                        'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+                        'heart-pop': 'heart-pop 0.6s ease-out forwards',
+                        'roll': 'roll 0.5s ease-in-out',
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'heart-pop': {
+                            '0%': { transform: 'scale(0)', opacity: '0' },
+                            '50%': { transform: 'scale(1.2)', opacity: '1' },
+                            '100%': { transform: 'scale(1)', opacity: '0' },
+                        },
+                        'roll': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' }
+                        },
+                        'shimmer': {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        },
+                        'shake': {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* --- Base & Reset --- */
@@ -13,7 +58,18 @@
             --sab: env(safe-area-inset-bottom);
             --sal: env(safe-area-inset-left);
             --sar: env(safe-area-inset-right);
+            
+            /* Theme Variables (Default: Rose) */
+            --brand: #e11d48; 
+            --brand-dark: #be123c;
+            --brand-rgb: 225, 29, 72;
         }
+
+        /* Theme Classes */
+        body.theme-blue { --brand: #3b82f6; --brand-dark: #2563eb; --brand-rgb: 59, 130, 246; }
+        body.theme-violet { --brand: #8b5cf6; --brand-dark: #7c3aed; --brand-rgb: 139, 92, 246; }
+        body.theme-amber { --brand: #f59e0b; --brand-dark: #d97706; --brand-rgb: 245, 158, 11; }
+        body.theme-emerald { --brand: #10b981; --brand-dark: #059669; --brand-rgb: 16, 185, 129; }
 
         body {
             background-color: #020617; /* Slate 950 */
@@ -21,6 +77,36 @@
             overflow: hidden; /* App shell */
             -webkit-tap-highlight-color: transparent;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: filter 0.5s ease;
+        }
+
+        /* --- Easter Egg --- */
+        body.party-mode {
+            animation: hue-rotate 3s infinite linear;
+        }
+        @keyframes hue-rotate {
+            from { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(360deg); }
+        }
+        
+        /* Cinema Mode */
+        body.cinema-mode header, 
+        body.cinema-mode #actionBar,
+        body.cinema-mode footer,
+        body.cinema-mode #dailyQuote {
+            opacity: 0 !important;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        body.cinema-mode #contentScrollArea {
+            background: #000;
+        }
+        body.cinema-mode #posterCol {
+            opacity: 0.1; /* Dim poster to focus on content/trailer */
+            pointer-events: none;
+        }
+        body.cinema-mode #detailsCol {
+             z-index: 50;
         }
 
         /* --- Utilities --- */
@@ -33,16 +119,25 @@
         /* --- Animations --- */
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         
         .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
         .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
         /* --- Glassmorphism --- */
         .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .glass-heavy {
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         /* --- Backgrounds --- */
@@ -54,8 +149,16 @@
             background-position: center;
             transition: background-image 0.8s ease-in-out;
             transform: scale(1.1);
-            filter: blur(60px) brightness(0.4) saturate(1.2);
+            filter: blur(60px) brightness(0.3) saturate(1.1);
             will-change: transform, filter;
+        }
+        #film-grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
         
         /* --- Components --- */
@@ -98,42 +201,127 @@
         @media (max-width: 768px) {
             input, select { font-size: 16px !important; }
         }
+
+        /* Grid View Card Hover */
+        .grid-card {
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .grid-card:hover {
+            transform: scale(1.03);
+            z-index: 10;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+        }
+        .grid-card:hover .grid-card-overlay { opacity: 1; }
+        .grid-card img {
+            transition: transform 0.5s ease;
+        }
+        .grid-card:hover img {
+            transform: scale(1.1);
+        }
+        
+        /* Filter Section Labels */
+        .filter-section-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding-left: 0.25rem;
+        }
+        
+        /* Mood Card */
+        .mood-card:active { transform: scale(0.95); }
+
+        /* Poster 3D Tilt */
+        .poster-3d-wrapper {
+            perspective: 1000px;
+        }
+        .poster-3d {
+            transition: transform 0.1s ease-out;
+            transform-style: preserve-3d;
+        }
+        .poster-3d:hover {
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        
+        /* Skeleton Shimmer */
+        .skeleton {
+            background: #1e293b;
+            background: linear-gradient(110deg, #1e293b 8%, #334155 18%, #1e293b 33%);
+            background-size: 200% 100%;
+            animation: 1.5s shimmer linear infinite;
+        }
     </style>
 </head>
-<body class="flex flex-col h-[100dvh] w-full selection:bg-rose-500/30">
+<body class="flex flex-col h-[100dvh] w-full selection:bg-brand/30">
 
     <!-- Backgrounds -->
     <div id="dynamic-bg"></div>
-    <div class="absolute inset-0 z-0 bg-gradient-to-b from-slate-950/30 via-slate-950/60 to-slate-950/90 pointer-events-none"></div>
+    <div id="film-grain"></div>
+    <div class="absolute inset-0 z-0 bg-gradient-to-b from-slate-950/20 via-slate-950/70 to-slate-950 pointer-events-none"></div>
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
 
+    <!-- Lightbox -->
+    <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center cursor-zoom-out animate-fade-in">
+        <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white hover:text-brand transition-colors p-2 bg-black/50 rounded-full z-50"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <button onclick="downloadPoster()" class="absolute top-4 right-20 text-white hover:text-brand transition-colors p-2 bg-black/50 rounded-full z-50" title="Download Poster"><i data-lucide="download" class="w-8 h-8"></i></button>
+        <img id="lightboxImg" src="" class="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-md">
+    </div>
+
     <!-- Header (Fixed) -->
-    <header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 safe-pt">
+    <header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 glass-heavy safe-pt transition-all duration-300 gap-4">
         <!-- Logo -->
-        <div class="flex items-center gap-2 group cursor-pointer flex-shrink-0" id="logoBtn">
-            <div class="p-1.5 bg-gradient-to-br from-rose-600 to-purple-600 rounded-lg shadow-lg group-active:scale-95 transition-transform">
+        <div class="flex items-center gap-2 group cursor-pointer flex-shrink-0 select-none" id="logoBtn">
+            <div class="p-1.5 bg-gradient-to-br from-brand to-purple-600 rounded-lg shadow-lg group-active:scale-95 transition-transform ring-1 ring-white/10">
                 <i data-lucide="clapperboard" class="text-white w-5 h-5"></i>
             </div>
-            <span class="text-lg font-black tracking-tighter text-white drop-shadow-md hidden min-[360px]:block">
-                Watch<span class="text-rose-500">Next</span>
+            <span class="text-lg font-black tracking-tighter text-white drop-shadow-md hidden md:block">
+                Watch<span class="text-brand">Next</span>
             </span>
         </div>
 
         <!-- Search Bar -->
-        <div class="relative flex-1 max-w-md mx-3 md:mx-6">
-            <div class="bg-white/10 rounded-full flex items-center px-4 h-10 border border-white/5 focus-within:bg-white/15 focus-within:border-rose-500/50 transition-all group">
+        <div class="relative flex-1 max-w-md">
+            <div class="bg-white/5 rounded-full flex items-center px-4 h-10 border border-white/10 focus-within:bg-white/10 focus-within:border-brand/50 transition-all group shadow-inner">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2 group-focus-within:text-white transition-colors"></i>
-                <input type="text" id="searchInput" placeholder="Search..." class="bg-transparent border-none text-white placeholder-slate-400 text-sm w-full focus:outline-none h-full">
+                <input type="text" id="searchInput" placeholder="Search... (Press /)" class="bg-transparent border-none text-white placeholder-slate-500 text-sm w-full focus:outline-none h-full">
                 <button id="clearSearch" class="hidden text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"><i data-lucide="x" class="w-3 h-3"></i></button>
             </div>
             <!-- Search Results Dropdown -->
             <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl hidden max-h-[60vh] overflow-y-auto custom-scroll z-[90]"></div>
         </div>
         
-        <!-- Toggle -->
-        <div class="flex items-center bg-black/40 p-1 rounded-full border border-white/10 flex-shrink-0">
-            <button id="modeMovie" class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all bg-rose-600 text-white shadow-lg">Movies</button>
-            <button id="modeTV" class="px-3 py-1.5 rounded-full text-[11px] font-bold text-slate-400 hover:text-white transition-all">TV</button>
+        <!-- Right Actions -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+             <!-- Box Office Button -->
+             <button id="openBoxOfficeBtn" class="p-2 rounded-full bg-black/40 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90" title="Box Office">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+            </button>
+
+             <!-- Watchlist Button -->
+            <button id="viewWatchlistBtn" class="p-2 rounded-full bg-black/40 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90" title="My List">
+                <i data-lucide="heart" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Stats/Profile Button -->
+            <button id="openStatsBtn" class="p-2 rounded-full bg-black/40 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90" title="My Stats">
+                <i data-lucide="user" class="w-5 h-5"></i>
+            </button>
+            
+            <!-- Settings Button -->
+            <button id="openSettingsBtn" class="p-2 rounded-full bg-black/40 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90" title="Settings">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Mode Toggle -->
+            <div class="hidden sm:flex items-center bg-black/40 p-1 rounded-full border border-white/10 shadow-lg">
+                <button id="modeMovie" class="px-4 py-1.5 rounded-full text-[11px] font-bold transition-all bg-brand text-white shadow-lg ring-1 ring-white/20">Movies</button>
+                <button id="modeTV" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-400 hover:text-white transition-all hover:bg-white/5">TV</button>
+            </div>
         </div>
     </header>
 
@@ -141,88 +329,284 @@
     <main class="relative z-10 flex-grow w-full h-full overflow-hidden pt-[calc(3.5rem+env(safe-area-inset-top))]">
         
         <!-- Error Toast -->
-        <div id="errorToast" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-6 py-3 rounded-full shadow-2xl items-center gap-3 z-[100] animate-fade-in backdrop-blur-md border border-white/10 w-[90%] max-w-sm flex justify-between">
+        <div id="errorToast" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-brand text-white px-6 py-3 rounded-full shadow-2xl items-center gap-3 z-[100] animate-fade-in backdrop-blur-md border border-white/10 w-[90%] max-w-sm flex justify-between">
             <div class="flex items-center gap-2">
                 <i data-lucide="alert-circle" class="w-4 h-4"></i>
                 <span id="errorText" class="text-sm font-medium">Error message</span>
             </div>
             <button onclick="document.getElementById('errorToast').classList.add('hidden')" class="opacity-80 hover:opacity-100 p-1">✕</button>
         </div>
+        
+        <!-- Stats Modal -->
+        <div id="statsModal" class="hidden absolute inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-pop relative">
+                <button id="closeStatsBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-br from-brand to-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg border-4 border-slate-800">
+                        <i data-lucide="user" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">My Profile</h3>
+                    <p class="text-xs text-brand font-bold uppercase tracking-wider" id="userRank">Novice Watcher</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 text-center">
+                        <span class="block text-2xl font-black text-white" id="statViewed">0</span>
+                        <span class="text-[10px] text-slate-500 uppercase font-bold">Explored</span>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 text-center">
+                        <span class="block text-2xl font-black text-white" id="statSaved">0</span>
+                        <span class="text-[10px] text-slate-500 uppercase font-bold">Saved</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white/5 p-4 rounded-xl border border-white/5 mb-2">
+                    <div class="flex items-center justify-between mb-1">
+                         <span class="text-xs text-slate-400">Favorite Genre</span>
+                         <i data-lucide="heart" class="w-3 h-3 text-brand"></i>
+                    </div>
+                    <span class="text-lg font-bold text-white" id="statGenre">-</span>
+                </div>
+                <p class="text-[10px] text-slate-600 text-center mt-4">Stats are stored locally on your device.</p>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="hidden absolute inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-pop relative">
+                <button id="closeSettingsBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i data-lucide="settings" class="w-5 h-5 text-brand"></i> Settings</h3>
+                
+                <div class="space-y-6">
+                    <!-- Region Setting -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="globe" class="w-3 h-3"></i> Streaming Region</label>
+                        <select id="regionSelect" class="w-full bg-slate-800 text-white text-sm rounded-lg p-3 border border-white/10 focus:outline-none focus:border-brand">
+                            <option value="US">🇺🇸 United States</option>
+                            <option value="IN">🇮🇳 India</option>
+                            <option value="SA">🇸🇦 Saudi Arabia</option>
+                            <option value="GB">🇬🇧 United Kingdom</option>
+                            <option value="CA">🇨🇦 Canada</option>
+                            <option value="AU">🇦🇺 Australia</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 mt-1">Updates "Watch On" links availability.</p>
+                    </div>
+                    
+                    <!-- Sound Toggle -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="block text-sm font-bold text-white flex items-center gap-2"><i data-lucide="volume-2" class="w-3 h-3 text-slate-400"></i> Sound Effects</span>
+                            <span class="text-[10px] text-slate-500">UI feedback sounds</span>
+                        </div>
+                        <button id="soundToggle" class="w-12 h-6 bg-slate-700 rounded-full relative transition-colors">
+                            <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform"></div>
+                        </button>
+                    </div>
+
+                    <!-- Theme Selector -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="palette" class="w-3 h-3"></i> Theme Color</label>
+                        <div class="flex gap-2">
+                            <button onclick="setTheme('')" class="w-8 h-8 rounded-full bg-rose-600 ring-2 ring-transparent focus:ring-white border border-white/20"></button>
+                            <button onclick="setTheme('theme-blue')" class="w-8 h-8 rounded-full bg-blue-600 ring-2 ring-transparent focus:ring-white border border-white/20"></button>
+                            <button onclick="setTheme('theme-violet')" class="w-8 h-8 rounded-full bg-violet-600 ring-2 ring-transparent focus:ring-white border border-white/20"></button>
+                            <button onclick="setTheme('theme-amber')" class="w-8 h-8 rounded-full bg-amber-500 ring-2 ring-transparent focus:ring-white border border-white/20"></button>
+                            <button onclick="setTheme('theme-emerald')" class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-transparent focus:ring-white border border-white/20"></button>
+                        </div>
+                    </div>
+
+                    <hr class="border-white/10">
+
+                    <!-- Extra Actions -->
+                    <div class="flex gap-2">
+                        <button id="clearHistoryBtn" class="flex-1 py-2 bg-slate-800 text-xs font-bold text-slate-300 rounded-lg hover:text-white hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i> Clear History
+                        </button>
+                        <button onclick="shareApp()" class="flex-1 py-2 bg-slate-800 text-xs font-bold text-slate-300 rounded-lg hover:text-white hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="share-2" class="w-3 h-3"></i> Share App
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- VIEW 1: DISCOVERY (Selection) -->
         <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pb-24 px-4 flex flex-col items-center">
             
-            <div class="text-center mb-6 mt-4 md:mt-10 animate-fade-in w-full max-w-2xl mx-auto">
-                <h2 class="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight leading-tight">
-                    Find your next <span class="bg-gradient-to-r from-rose-500 to-purple-500 bg-clip-text text-transparent">obsession</span>.
-                </h2>
-                <p id="modeDescription" class="text-slate-400 text-sm md:text-base font-medium">Browsing Movies</p>
-            </div>
-
-            <!-- Filters Grid -->
-            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-8 animate-slide-up" style="animation-delay: 0.1s">
-                <!-- Helper for Select Wrapper -->
-                <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors">
-                    <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500">Era</label>
-                    <select id="decadeFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
-                        <option value="" class="bg-slate-900">Any Time</option>
-                        <option value="2024" class="bg-slate-900">New (2024-25)</option>
-                        <option value="2020" class="bg-slate-900">2020s</option>
-                        <option value="2010" class="bg-slate-900">2010s</option>
-                        <option value="2000" class="bg-slate-900">2000s</option>
-                        <option value="1990" class="bg-slate-900">90s Classics</option>
-                        <option value="1980" class="bg-slate-900">80s Retro</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+            <!-- Trending Carousel -->
+            <div class="w-full max-w-6xl mt-6 animate-slide-up relative group/trending">
+                <div class="flex items-center gap-2 mb-3 px-2 justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="flame" class="text-brand w-4 h-4"></i>
+                        <span class="text-xs font-bold text-white uppercase tracking-widest">Trending Now</span>
+                    </div>
+                    <!-- Quote of the Day -->
+                    <div id="dailyQuote" class="hidden md:block text-[10px] text-slate-500 italic font-medium max-w-md text-right"></div>
                 </div>
-
-                <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors">
-                    <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500">Language</label>
-                    <select id="languageFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
-                        <option value="en" class="bg-slate-900">English</option>
-                        <option value="hi" class="bg-slate-900">Hindi</option>
-                        <option value="kn" class="bg-slate-900">Kannada</option>
-                        <option value="ta" class="bg-slate-900">Tamil</option>
-                        <option value="te" class="bg-slate-900">Telugu</option>
-                        <option value="ml" class="bg-slate-900">Malayalam</option>
-                        <option value="ko" class="bg-slate-900">Korean</option>
-                        <option value="ja" class="bg-slate-900">Japanese</option>
-                        <option value="" class="bg-slate-900">All</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                </div>
-
-                <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors">
-                    <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500">Length</label>
-                    <select id="runtimeFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
-                        <option value="" class="bg-slate-900">Any</option>
-                        <option value="short" class="bg-slate-900">Short (&lt; 90m)</option>
-                        <option value="medium" class="bg-slate-900">Standard</option>
-                        <option value="long" class="bg-slate-900">Epic (&gt; 120m)</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                </div>
-
-                <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors">
-                    <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500">Sort</label>
-                    <select id="sortFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
-                        <option value="popularity.desc" class="bg-slate-900">Popularity</option>
-                        <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
-                        <option value="revenue.desc" class="bg-slate-900">Box Office</option>
-                        <option value="primary_release_date.desc" class="bg-slate-900">Newest</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                </div>
-
-                <button id="surpriseBtn" class="col-span-2 md:col-span-1 h-14 bg-gradient-to-br from-purple-600 to-rose-600 rounded-xl flex items-center justify-center gap-2 text-white font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-rose-600/20 group cursor-pointer border border-white/10">
-                    <i data-lucide="sparkles" class="w-4 h-4 group-hover:animate-spin"></i>
-                    <span>Surprise Me</span>
+                
+                <!-- Scroll Buttons -->
+                <button id="scrollTrendLeft" class="absolute left-0 top-[60%] -translate-y-1/2 z-20 bg-black/60 backdrop-blur-md p-2 rounded-full text-white opacity-0 group-hover/trending:opacity-100 transition-opacity border border-white/10 hover:bg-brand hidden md:block">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
                 </button>
+                <button id="scrollTrendRight" class="absolute right-0 top-[60%] -translate-y-1/2 z-20 bg-black/60 backdrop-blur-md p-2 rounded-full text-white opacity-0 group-hover/trending:opacity-100 transition-opacity border border-white/10 hover:bg-brand hidden md:block">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+
+                <div id="trendingList" class="flex gap-3 overflow-x-auto no-scrollbar pb-4 pl-1 snap-x scroll-smooth">
+                    <!-- Trending items injected here -->
+                </div>
             </div>
 
-            <!-- Genre Grid -->
-            <div id="genreGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full max-w-6xl animate-slide-up relative z-0 pb-10" style="animation-delay: 0.2s">
-                <!-- Genres injected here -->
+            <div class="text-center mb-8 mt-6 animate-fade-in w-full max-w-3xl mx-auto">
+                <div class="inline-flex items-center justify-center px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-widest text-brand mb-4 backdrop-blur-sm">
+                    Discover Quality Content
+                </div>
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight leading-tight drop-shadow-lg">
+                    Find your next <br class="hidden md:block"/> <span class="bg-gradient-to-r from-brand via-purple-500 to-indigo-500 bg-clip-text text-transparent">obsession</span>.
+                </h2>
+                <div class="flex justify-center sm:hidden mb-4">
+                     <!-- Mobile Toggle -->
+                    <div class="flex items-center bg-black/40 p-1 rounded-full border border-white/10 shadow-lg">
+                        <button onclick="switchMode('movie')" id="modeMovieMobile" class="px-4 py-1.5 rounded-full text-[11px] font-bold transition-all bg-brand text-white shadow-lg">Movies</button>
+                        <button onclick="switchMode('tv')" id="modeTVMobile" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-400 hover:text-white transition-all">TV</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Area -->
+            <div class="w-full max-w-6xl animate-slide-up space-y-6" style="animation-delay: 0.1s">
+                
+                <!-- Category 1: Content -->
+                <div>
+                    <span class="filter-section-label"><i data-lucide="film" class="w-3 h-3 text-brand"></i> Content</span>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="tag" class="w-2.5 h-2.5"></i> Genre</label>
+                            <select id="genreFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="" class="bg-slate-900">All Genres</option>
+                                <!-- Injected via JS -->
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="calendar" class="w-2.5 h-2.5"></i> Era</label>
+                            <select id="decadeFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="" class="bg-slate-900">Any Time</option>
+                                <option value="2024" class="bg-slate-900">New (2024-25)</option>
+                                <option value="2020" class="bg-slate-900">2020s</option>
+                                <option value="2010" class="bg-slate-900">2010s</option>
+                                <option value="2000" class="bg-slate-900">2000s</option>
+                                <option value="1990" class="bg-slate-900">90s Classics</option>
+                                <option value="1980" class="bg-slate-900">80s Retro</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="languages" class="w-2.5 h-2.5"></i> Language</label>
+                            <select id="languageFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="en" class="bg-slate-900">English</option>
+                                <option value="hi" class="bg-slate-900">Hindi</option>
+                                <option value="kn" class="bg-slate-900">Kannada</option>
+                                <option value="ta" class="bg-slate-900">Tamil</option>
+                                <option value="te" class="bg-slate-900">Telugu</option>
+                                <option value="ml" class="bg-slate-900">Malayalam</option>
+                                <option value="ko" class="bg-slate-900">Korean</option>
+                                <option value="ja" class="bg-slate-900">Japanese</option>
+                                <option value="es" class="bg-slate-900">Spanish</option>
+                                <option value="" class="bg-slate-900">All</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+                        
+                         <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="clock" class="w-2.5 h-2.5"></i> Length</label>
+                            <select id="runtimeFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="" class="bg-slate-900">Any</option>
+                                <option value="short" class="bg-slate-900">Short (&lt; 90m)</option>
+                                <option value="medium" class="bg-slate-900">Standard</option>
+                                <option value="long" class="bg-slate-900">Epic (&gt; 120m)</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 2: Platform & Quality -->
+                <div>
+                     <span class="filter-section-label"><i data-lucide="sliders-horizontal" class="w-3 h-3 text-brand"></i> Preferences</span>
+                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                        
+                        <!-- Streaming Service Filter -->
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="tv" class="w-2.5 h-2.5"></i> Watch On</label>
+                            <select id="providerFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="" class="bg-slate-900">Any Platform</option>
+                                <option value="8" class="bg-slate-900">Netflix</option>
+                                <option value="9" class="bg-slate-900">Prime Video</option>
+                                <option value="337" class="bg-slate-900">Disney+</option>
+                                <option value="350" class="bg-slate-900">Apple TV+</option>
+                                <option value="15" class="bg-slate-900">Hulu</option>
+                                <option value="384" class="bg-slate-900">HBO Max</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+
+                        <!-- Min Rating Filter -->
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="star" class="w-2.5 h-2.5"></i> Min Rating</label>
+                            <select id="ratingFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="" class="bg-slate-900">Any Score</option>
+                                <option value="6" class="bg-slate-900">6+ (Good)</option>
+                                <option value="7" class="bg-slate-900">7+ (Great)</option>
+                                <option value="8" class="bg-slate-900">8+ (Excellent)</option>
+                                <option value="9" class="bg-slate-900">9+ (Masterpiece)</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+
+                        <div class="glass rounded-xl relative group hover:bg-white/5 transition-colors ring-1 ring-white/5 focus-within:ring-brand/50">
+                            <label class="absolute top-2 left-3 text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand transition-colors flex items-center gap-1"><i data-lucide="arrow-up-down" class="w-2.5 h-2.5"></i> Sort By</label>
+                            <select id="sortFilter" class="w-full h-14 pt-4 px-3 bg-transparent text-white text-sm font-bold focus:outline-none cursor-pointer appearance-none z-10 relative">
+                                <option value="popularity.desc" class="bg-slate-900">Popularity</option>
+                                <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
+                                <option value="revenue.desc" class="bg-slate-900">Box Office</option>
+                                <option value="primary_release_date.desc" class="bg-slate-900">Newest</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                        </div>
+
+                         <!-- Hidden Gems Button (Small) -->
+                        <button id="hiddenGemsBtn" class="h-14 bg-slate-800 hover:bg-emerald-600 rounded-xl flex items-center justify-center gap-2 text-white font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg border border-white/10 group cursor-pointer relative overflow-hidden">
+                            <i data-lucide="gem" class="w-4 h-4 text-emerald-400 group-hover:text-white"></i>
+                            <span class="relative z-10">Hidden Gems</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                 <button id="showResultsBtn" class="w-full h-16 bg-gradient-to-r from-brand to-branddark hover:opacity-90 rounded-2xl flex items-center justify-center gap-3 text-white text-lg font-black tracking-wide uppercase transition-all shadow-xl shadow-black/40 border border-white/10 group cursor-pointer active:scale-[0.98]">
+                    <i data-lucide="grid-2x2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span>Show Results</span>
+                </button>
+                
+                <div class="flex justify-center mt-2">
+                    <button id="surpriseBtn" class="text-xs text-slate-500 hover:text-brand underline decoration-dotted transition-colors flex items-center gap-1">
+                        Or stick to <i data-lucide="sparkles" class="w-3 h-3"></i> Surprise Me
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mood Picker (Replaced generic genre grid) -->
+             <div class="w-full max-w-6xl mt-8 mb-4 flex items-center gap-4 animate-slide-up" style="animation-delay: 0.2s">
+                 <div class="h-[1px] bg-white/5 flex-1"></div>
+                 <span class="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2"><i data-lucide="smile" class="w-3 h-3"></i> What's your mood?</span>
+                 <div class="h-[1px] bg-white/5 flex-1"></div>
+             </div>
+             
+            <div id="moodGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 w-full max-w-6xl animate-slide-up relative z-0 pb-10" style="animation-delay: 0.3s">
+                <!-- Moods injected here -->
             </div>
             
             <div class="h-10"></div> <!-- Spacer -->
@@ -232,33 +616,143 @@
         <div id="loadingView" class="hidden absolute inset-0 z-[60] bg-slate-950/80 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6 animate-fade-in">
             <div class="relative w-20 h-20 mb-6">
                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-               <div class="absolute inset-0 rounded-full border-t-4 border-rose-500 animate-spin"></div>
+               <div class="absolute inset-0 rounded-full border-t-4 border-brand animate-spin"></div>
             </div>
             <h3 id="loadingText" class="text-xl md:text-2xl font-bold text-white mb-2">Finding the perfect pick...</h3>
             <p id="loadingSubtext" class="text-slate-400 text-sm">Searching the multiverse</p>
         </div>
 
-        <!-- VIEW 3: RESULT -->
+        <!-- VIEW 3: GRID RESULTS (Generic) -->
+        <div id="gridResultsView" class="hidden absolute inset-0 z-30 bg-slate-950 flex flex-col">
+            <!-- Grid Header -->
+            <div class="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-slate-950/90 backdrop-blur-md border-b border-white/5 safe-pt shadow-xl z-20">
+                <button onclick="goBack()" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors py-1 pl-1 pr-3 rounded-lg hover:bg-white/5">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <span class="font-bold text-sm">Back</span>
+                </button>
+                <div class="flex flex-col items-center">
+                    <span class="font-black text-white text-base tracking-tight" id="gridTitle">Search Results</span>
+                </div>
+                <div class="w-20 flex justify-end">
+                    <button onclick="openRandomResult()" class="p-2 rounded-full bg-white/5 hover:bg-white/10 text-brand transition-colors animate-pulse" title="Pick Randomly (Click to roll)">
+                        <i id="diceIcon" data-lucide="dices" class="w-5 h-5"></i>
+                    </button>
+                </div> 
+            </div>
+            
+            <!-- Grid Content -->
+            <div id="gridWrapper" class="flex-1 overflow-y-auto custom-scroll p-4 md:p-6 pb-24 relative">
+                <div id="gridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8 max-w-[1920px] mx-auto">
+                    <!-- Items injected here -->
+                </div>
+                <!-- Empty State -->
+                <div id="emptyListState" class="hidden flex flex-col items-center justify-center py-20 opacity-60">
+                     <i data-lucide="film" class="w-16 h-16 mb-4 text-slate-600"></i>
+                     <p class="text-slate-400 font-bold">Your list is empty.</p>
+                     <p class="text-slate-600 text-sm">Go heart some movies!</p>
+                </div>
+
+                <!-- History Section in Grid -->
+                <div id="historySection" class="hidden mt-10 border-t border-white/10 pt-8">
+                     <div class="flex items-center gap-2 mb-4 px-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-brand"></i>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recently Viewed</span>
+                     </div>
+                     <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"></div>
+                </div>
+                
+                <div class="mt-12 flex justify-center pb-12">
+                    <button id="loadMoreBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all border border-white/10 shadow-lg active:scale-95 flex items-center gap-2">
+                        <span>Load More Gems</span>
+                        <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                
+                <!-- Back to Top Button -->
+                <button onclick="document.getElementById('gridWrapper').scrollTo({top:0, behavior:'smooth'})" class="fixed bottom-24 right-6 p-3 bg-brand text-white rounded-full shadow-lg z-50 hover:bg-branddark transition-colors md:bottom-10" title="Back to Top">
+                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 5: BOX OFFICE (NEW) -->
+        <div id="boxOfficeView" class="hidden absolute inset-0 z-30 bg-slate-950 flex flex-col">
+             <!-- Header -->
+            <div class="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-slate-950/90 backdrop-blur-md border-b border-white/5 safe-pt shadow-xl z-20">
+                <button onclick="goBack()" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors py-1 pl-1 pr-3 rounded-lg hover:bg-white/5">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <span class="font-bold text-sm">Back</span>
+                </button>
+                <span class="font-black text-white text-base tracking-tight flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-brand"></i> Box Office</span>
+                <div class="w-20"></div> 
+            </div>
+            
+            <!-- Controls -->
+            <div class="p-4 bg-slate-900 border-b border-white/5 flex flex-wrap gap-3 justify-center">
+                <select id="boLanguage" onchange="fetchBoxOffice(true)" class="bg-slate-800 text-white text-xs font-bold rounded-lg px-3 py-2 border border-white/10 focus:outline-none focus:border-brand">
+                    <option value="">Global (All Languages)</option>
+                    <option value="en">English (Hollywood)</option>
+                    <option value="hi">Hindi (Bollywood)</option>
+                    <option value="ja">Japanese (Anime/Live)</option>
+                    <option value="ko">Korean (K-Drama/Movie)</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="zh">Chinese</option>
+                </select>
+                <select id="boYear" onchange="fetchBoxOffice(true)" class="bg-slate-800 text-white text-xs font-bold rounded-lg px-3 py-2 border border-white/10 focus:outline-none focus:border-brand">
+                    <option value="all">All Time</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2010">2010s</option>
+                    <option value="2000">2000s</option>
+                    <option value="1990">1990s</option>
+                    <option value="1980">1980s</option>
+                </select>
+            </div>
+
+            <!-- Content -->
+            <div id="boGridWrapper" class="flex-1 overflow-y-auto custom-scroll p-4 md:p-6 pb-24 relative">
+                <div id="boGridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8 max-w-[1920px] mx-auto">
+                    <!-- Items injected here -->
+                </div>
+                
+                 <div class="mt-8 flex justify-center pb-8">
+                    <button id="boLoadMoreBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all border border-white/10 shadow-lg active:scale-95 flex items-center gap-2">
+                        <span>Load More Hits</span>
+                        <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: SINGLE RESULT DETAILS -->
         <!-- Fixed layout container -->
         <div id="resultView" class="hidden absolute inset-0 z-40 bg-slate-950">
             
             <!-- Mobile Close Button (Floating) -->
-            <button onclick="resetApp()" class="md:hidden absolute top-4 left-4 z-50 bg-black/40 backdrop-blur-md p-2.5 rounded-full text-white border border-white/10 shadow-lg active:scale-90 transition-transform">
+            <button onclick="goBack()" class="md:hidden absolute top-4 left-4 z-[60] bg-black/40 backdrop-blur-md p-2.5 rounded-full text-white border border-white/10 shadow-lg active:scale-90 transition-transform cinema-fade">
                 <i data-lucide="arrow-left" class="w-6 h-6"></i>
             </button>
+            
+            <!-- Like Animation Overlay -->
+            <div id="likeOverlay" class="absolute inset-0 pointer-events-none flex items-center justify-center z-[60] hidden">
+                <i data-lucide="heart" class="w-32 h-32 text-brand fill-brand animate-heart-pop drop-shadow-2xl"></i>
+            </div>
     
             <!-- Layout: Flex col on mobile (scrolls), Flex row on desktop (left fixed, right scrolls) -->
             <div class="w-full h-full flex flex-col md:flex-row overflow-hidden relative">
                 
                 <!-- SCROLL CONTAINER (Wrapper for everything on mobile, Right pane on desktop) -->
-                <!-- On Mobile: This div is the main scroller. -->
-                <!-- On Desktop: We unwrap this logic slightly via CSS. -->
-                
                 <div id="contentScrollArea" class="flex-1 w-full h-full overflow-y-auto no-scrollbar md:flex md:flex-row md:overflow-hidden pb-24 md:pb-0 relative">
                     
                     <!-- LEFT/TOP: Poster Area -->
-                    <!-- Mobile: Flows in scroll. Desktop: Fixed column. -->
-                    <div id="posterCol" class="w-full md:w-5/12 lg:w-4/12 shrink-0 relative bg-black md:h-full md:overflow-hidden flex flex-col items-center justify-start md:justify-center">
+                    <div id="posterCol" class="w-full md:w-5/12 lg:w-4/12 shrink-0 relative bg-black md:h-full md:overflow-hidden flex flex-col items-center justify-start md:justify-center poster-3d-wrapper perspective-1000">
                         <!-- Mobile Background Blur -->
                         <div class="absolute inset-0 md:hidden overflow-hidden">
                             <div id="mobilePosterBg" class="w-full h-full bg-cover bg-center blur-xl opacity-50 scale-110"></div>
@@ -267,32 +761,56 @@
                         
                         <!-- Poster Image -->
                         <div class="w-full relative p-8 md:p-8 lg:p-12 flex justify-center pt-24 md:pt-0">
-                            <div id="posterArea" class="relative z-10 w-[65%] md:w-full max-w-[320px] aspect-[2/3] shadow-2xl rounded-xl overflow-hidden border border-white/10 transform transition-transform md:hover:scale-[1.02] bg-slate-800">
+                            <div id="posterArea" class="poster-3d relative z-10 w-[65%] md:w-full max-w-[320px] aspect-[2/3] shadow-2xl rounded-xl overflow-hidden border border-white/10 transform transition-transform md:hover:scale-[1.02] bg-slate-800 cursor-pointer select-none">
                                 <!-- Image injected via JS -->
                             </div>
+                            <div class="absolute bottom-4 opacity-50 text-[10px] text-white/70 animate-pulse md:hidden">Double tap to like</div>
                         </div>
                     </div>
     
                     <!-- RIGHT/BOTTOM: Details Area -->
-                    <!-- Mobile: Flows after poster. Desktop: Scrolls independently. -->
                     <div id="detailsCol" class="w-full md:w-7/12 lg:w-8/12 relative flex flex-col md:h-full md:overflow-y-auto bg-slate-950 md:bg-transparent">
                         
-                        <!-- Added top padding (md:pt-24 lg:pt-28) to clear the header on desktop -->
                         <div class="p-5 md:px-10 md:pb-10 md:pt-24 lg:px-12 lg:pb-12 lg:pt-28 max-w-4xl mx-auto w-full pb-32">
                             
                             <!-- Header Info -->
                             <div class="flex flex-wrap items-center gap-3 mb-4 justify-center md:justify-start">
-                                <span id="resGenre" class="text-[10px] md:text-xs font-bold tracking-widest text-rose-500 uppercase border border-rose-500/30 px-2 py-0.5 rounded">Action</span>
+                                <span id="resGenre" class="text-[10px] md:text-xs font-bold tracking-widest text-brand uppercase border border-brand/30 px-2 py-0.5 rounded">Action</span>
                                 <span id="resYear" class="text-xs font-bold text-slate-300 bg-white/5 px-2 py-0.5 rounded">2024</span>
+                                <!-- Added Vote Count and Status here -->
                                 <div class="flex items-center gap-1 text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
                                     <i data-lucide="star" class="w-3 h-3 fill-current"></i> <span id="resRating">8.5</span>
+                                    <span id="resVoteCount" class="text-amber-400/60 ml-1 font-normal">(25k)</span>
+                                </div>
+                                <span id="resStatus" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider hidden md:block">Released</span>
+                                
+                                <!-- Links -->
+                                <div class="flex gap-2 ml-auto">
+                                    <a id="linkImdb" href="#" target="_blank" class="text-slate-400 hover:text-[#f5c518] transition-colors"><i data-lucide="clapperboard" class="w-4 h-4"></i></a>
+                                    <a id="linkInsta" href="#" target="_blank" class="text-slate-400 hover:text-[#E1306C] transition-colors"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+                                    <a id="linkTwitter" href="#" target="_blank" class="text-slate-400 hover:text-[#1DA1F2] transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+                                    <a id="linkHome" href="#" target="_blank" class="text-slate-400 hover:text-white transition-colors"><i data-lucide="link" class="w-4 h-4"></i></a>
                                 </div>
                             </div>
         
                             <!-- Title -->
-                            <h1 id="resTitle" class="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-3 text-center md:text-left drop-shadow-lg">Movie Title</h1>
-                            <p id="resTagline" class="text-sm md:text-lg text-slate-400 italic mb-8 font-light text-center md:text-left md:pl-4 md:border-l-2 md:border-rose-500/50">"The tagline goes here"</p>
+                            <h1 id="resTitle" class="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-2 text-center md:text-left drop-shadow-lg">Movie Title</h1>
+                            <h2 id="resOriginalTitle" class="text-sm md:text-base text-slate-500 font-medium mb-3 text-center md:text-left hidden">Original Title</h2>
+                            
+                            <p id="resTagline" class="text-sm md:text-lg text-slate-400 italic mb-8 font-light text-center md:text-left md:pl-4 md:border-l-2 md:border-brand/50">"The tagline goes here"</p>
         
+                            <!-- Keyword Tags (New) -->
+                            <div id="keywordTags" class="flex flex-wrap gap-2 mb-6 justify-center md:justify-start"></div>
+
+                            <!-- Collection Button (Hidden by default) -->
+                            <div id="collectionArea" class="mb-8 hidden">
+                                <button id="collectionBtn" class="flex items-center gap-2 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 border border-indigo-500/30 hover:border-indigo-400 text-indigo-100 px-4 py-2 rounded-lg transition-all active:scale-95 group">
+                                    <i data-lucide="library" class="w-4 h-4"></i>
+                                    <span class="text-sm font-bold" id="collectionName">View Collection</span>
+                                    <i data-lucide="arrow-right" class="w-3 h-3 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+
                             <!-- Metadata Chips -->
                             <div class="flex flex-wrap gap-2 mb-8 justify-center md:justify-start" id="metaChips">
                                 <!-- Chips injected JS -->
@@ -305,7 +823,7 @@
         
                             <!-- Plot -->
                             <div class="mb-8">
-                                <h3 class="text-white font-bold text-lg mb-2">Synopsis</h3>
+                                <h3 class="text-white font-bold text-lg mb-2 flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-brand"></i> Synopsis</h3>
                                 <p id="resPlot" class="text-slate-300 text-sm md:text-base leading-relaxed font-light opacity-90">
                                     Detailed plot summary goes here...
                                 </p>
@@ -314,7 +832,7 @@
                             <!-- COLLAPSIBLE TRAILER -->
                             <div class="mb-8 border border-white/10 rounded-xl overflow-hidden bg-black/30">
                                 <button id="toggleTrailerBtn" class="w-full flex items-center justify-between p-4 text-sm font-bold text-white hover:bg-white/5 transition-colors active:bg-white/10">
-                                    <span class="flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4 text-rose-500"></i> Watch Trailer</span>
+                                    <span class="flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4 text-brand"></i> Watch Trailer</span>
                                     <i id="trailerIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform text-slate-500"></i>
                                 </button>
                                 <div id="inlineTrailerContainer" class="collapsible-content">
@@ -324,16 +842,45 @@
                                 </div>
                             </div>
         
+                            <!-- Director Spotlight (New) -->
+                            <div id="directorArea" class="mb-8 hidden">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="clapperboard" class="w-3 h-3"></i> Director</h4>
+                                <div id="directorList" class="flex flex-wrap gap-4"></div>
+                            </div>
+
                             <!-- Providers -->
                             <div id="providersArea" class="mb-8 hidden">
-                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="tv" class="w-3 h-3"></i> Available On</h4>
-                                <div id="providerIcons" class="flex flex-wrap gap-3"></div>
+                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="tv" class="w-3 h-3"></i> Available On <span id="regionLabel" class="text-brand ml-1"></span></h4>
+                                
+                                <div class="mb-3">
+                                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 block">Stream</span>
+                                    <div id="providerIconsStream" class="flex flex-wrap gap-3"></div>
+                                </div>
+                                <div id="providerRentSection" class="hidden">
+                                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 block">Rent / Buy</span>
+                                    <div id="providerIconsRent" class="flex flex-wrap gap-3"></div>
+                                </div>
                             </div>
         
                             <!-- Cast -->
-                            <div class="mb-8">
+                            <div class="mb-8 relative group/cast">
                                 <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="users" class="w-3 h-3"></i> Top Cast</h4>
-                                <div id="castList" class="flex gap-4 overflow-x-auto no-scrollbar pb-4 mask-gradient-right pl-1"></div>
+                                
+                                <!-- Scroll Buttons -->
+                                <button id="scrollCastLeft" class="absolute left-0 top-[60%] -translate-y-1/2 z-20 bg-black/60 backdrop-blur-md p-2 rounded-full text-white opacity-0 group-hover/cast:opacity-100 transition-opacity border border-white/10 hover:bg-brand hidden md:block">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </button>
+                                <button id="scrollCastRight" class="absolute right-0 top-[60%] -translate-y-1/2 z-20 bg-black/60 backdrop-blur-md p-2 rounded-full text-white opacity-0 group-hover/cast:opacity-100 transition-opacity border border-white/10 hover:bg-brand hidden md:block">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+
+                                <div id="castList" class="flex gap-4 overflow-x-auto no-scrollbar pb-4 pl-1 snap-x scroll-smooth"></div>
+                            </div>
+
+                            <!-- Reviews (New) -->
+                            <div id="reviewsArea" class="mb-8 hidden">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="message-square" class="w-3 h-3"></i> Reviews</h4>
+                                <div id="reviewsList" class="flex flex-col gap-3"></div>
                             </div>
         
                             <!-- Recommendations -->
@@ -346,13 +893,16 @@
                 </div>
     
                 <!-- UNIVERSAL FIXED FOOTER -->
-                <!-- Fixed on bottom for mobile. Absolute/Fixed bottom right for desktop. -->
-                <div id="actionBar" class="fixed bottom-0 right-0 left-0 md:left-auto w-full md:w-[58.333333%] lg:w-[66.666667%] z-50 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 p-4 md:p-6 flex gap-3 safe-pb">
-                     <button onclick="resetApp()" class="flex-1 max-w-[100px] bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2 active:scale-95">
+                <div id="actionBar" class="fixed bottom-0 right-0 left-0 md:left-auto w-full md:w-[58.333333%] lg:w-[66.666667%] z-50 bg-slate-950/90 backdrop-blur-xl border-t border-white/10 p-4 md:p-6 flex gap-3 safe-pb cinema-fade">
+                     <button onclick="goBack()" class="flex-1 max-w-[100px] bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2 active:scale-95">
                         <i data-lucide="x" class="w-5 h-5"></i>
                         <span class="text-xs md:text-sm">Back</span>
                     </button>
-                    <a id="streamLink" href="#" target="_blank" class="flex-[2] bg-gradient-to-r from-rose-600 to-rose-500 hover:to-rose-400 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <!-- Add to Watchlist Button -->
+                    <button id="addToWatchlistBtn" class="flex-1 max-w-[60px] md:max-w-[100px] bg-slate-800 hover:bg-brand/20 text-slate-300 hover:text-brand rounded-xl border border-white/10 flex items-center justify-center active:scale-95 transition-all">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                    </button>
+                    <a id="streamLink" href="#" target="_blank" class="flex-[2] bg-gradient-to-r from-brand to-branddark hover:opacity-90 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-black/30 flex items-center justify-center gap-2 active:scale-[0.98]">
                         <i data-lucide="play" class="w-5 h-5 fill-current"></i> 
                         <span>Stream Now</span>
                     </a>
@@ -367,9 +917,12 @@
     </main>
 
     <!-- Footer Credit -->
-    <footer class="fixed bottom-1 left-0 right-0 text-center z-[20] pointer-events-none safe-pb">
-        <!-- Hidden when result view is open because fixed footer covers it -->
-        <p class="text-[10px] text-slate-600 font-medium">Arnav Dugad © 2025</p>
+    <footer class="fixed bottom-0 left-0 right-0 z-[20] pointer-events-none flex justify-center pb-2 cinema-fade">
+        <div class="glass px-4 py-1.5 rounded-full border border-white/5 shadow-xl backdrop-blur-md pointer-events-auto transition-transform hover:scale-105">
+            <p class="text-[10px] text-slate-400 font-medium">
+                Arnav Dugad © 2025
+            </p>
+        </div>
     </footer>
 
     <script>
@@ -379,6 +932,25 @@
         const IMG_URL = "https://image.tmdb.org/t/p/original";
         const POSTER_URL = "https://image.tmdb.org/t/p/w780";
         const PROFILE_URL = "https://image.tmdb.org/t/p/w185";
+        
+        // --- MOVIE QUOTES ---
+        const QUOTES = [
+            "I'm going to make him an offer he can't refuse.",
+            "May the Force be with you.",
+            "There's no place like home.",
+            "I'm the king of the world!",
+            "Carpe diem. Seize the day, boys.",
+            "Elementary, my dear Watson.",
+            "It's alive! It's alive!",
+            "My precious.",
+            "Houston, we have a problem.",
+            "You can't handle the truth!",
+            "I'll be back.",
+            "Why so serious?"
+        ];
+
+        // --- NAVIGATION STATE ---
+        let viewStack = []; // Stack to keep track of navigation history
 
         const STREAM_URLS = {
             'Netflix': 'https://www.netflix.com/search?q=',
@@ -415,26 +987,223 @@
             'Soap':{id:10766, icon:'coffee'}, 'Talk':{id:10767, icon:'mic-2'}, 'War & Politics':{id:10768, icon:'shield'}
         };
 
+        const MOODS = [
+            { label: "Chill", emoji: "😎", genres: [35, 16, 10751, 10762] }, // Comedy, Animation, Family
+            { label: "Excited", emoji: "🤩", genres: [28, 12, 878, 10759] }, // Action, Adventure, Sci-Fi
+            { label: "Spooky", emoji: "😱", genres: [27, 9648] }, // Horror, Mystery
+            { label: "Romantic", emoji: "🥰", genres: [10749, 18, 10766] }, // Romance, Drama
+            { label: "Smart", emoji: "🧐", genres: [99, 36, 80, 10768] }, // Doc, History, Crime
+            { label: "Tense", emoji: "😬", genres: [53, 10752] } // Thriller, War
+        ];
+
         // --- STATE ---
         let currentMode = 'movie'; // 'movie' or 'tv'
         let currentItem = null;
         let searchTimeout = null;
         let isTrailerExpanded = false;
+        let isGridOpen = false;
+        let isWatchlistMode = false;
+        let gridItems = []; // Store current grid items for random pick
+        let lastTap = 0; // For double tap
+        
+        // Grid State
+        let currentPage = 1;
+        let loadedIds = new Set();
+        let isFetchingGrid = false;
+        let watchlist = [];
+        let history = []; // Recently viewed
+        
+        // Box Office State
+        let boCurrentPage = 1;
+
+        // Settings State
+        let settings = {
+            region: 'IN', // Default
+            sound: false, // Default is strictly false
+            theme: '', // Default Rose
+            version: 3 // Increment to force reset if needed
+        };
+
+        // Easter Egg State
+        let logoClickCount = 0;
+        let logoClickTimeout;
+
+        // Sound AudioContext
+        let audioCtx;
+        
+        // --- SOUND ENGINE ---
+        function initAudio() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if(!settings.sound) return;
+            initAudio();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+
+            if(type === 'hover') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.05);
+                gainNode.gain.setValueAtTime(0.02, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'click') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.setValueAtTime(800, now + 0.1);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.linearRampToValueAtTime(0.05, now + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
 
         // --- INIT ---
         function init() {
-            renderGenres();
+            // Load Data from LocalStorage
+            const stored = localStorage.getItem('watchNextList');
+            if(stored) watchlist = JSON.parse(stored);
+            
+            const storedHist = localStorage.getItem('watchNextHistory');
+            if(storedHist) history = JSON.parse(storedHist);
+
+            const storedSettings = localStorage.getItem('watchNextSettings');
+            if(storedSettings) {
+                const parsed = JSON.parse(storedSettings);
+                // Version check to ensure fresh defaults if needed
+                if(parsed.version === settings.version) {
+                    settings = parsed;
+                } else {
+                    // Update version but keep user prefs where possible, force sound off default for new version
+                    settings.version = 3;
+                    settings.sound = false; 
+                    saveSettings();
+                }
+            } else {
+                settings.sound = false; // Ensure explicit false on first run
+                saveSettings();
+            }
+
+            // Apply Settings
+            document.getElementById('regionSelect').value = settings.region;
+            if(settings.theme) document.body.className = "flex flex-col h-[100dvh] w-full selection:bg-brand/30 " + settings.theme;
+            updateSoundToggleUI();
+            
+            // Random Quote
+            const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+            document.getElementById('dailyQuote').textContent = `"${quote}"`;
+
+            renderMoods();
+            updateGenreDropdown();
             lucide.createIcons();
+            fetchTrending(); 
+            calculateStats();
             
             // Initial Background
             updateBackground('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg');
 
             // Event Listeners
-            document.getElementById('logoBtn').onclick = resetApp;
-            document.getElementById('modeMovie').onclick = () => switchMode('movie');
-            document.getElementById('modeTV').onclick = () => switchMode('tv');
-            document.getElementById('surpriseBtn').onclick = surpriseMe;
-            document.getElementById('toggleTrailerBtn').onclick = toggleTrailer;
+            const logo = document.getElementById('logoBtn');
+            logo.onclick = handleLogoClick;
+
+            document.getElementById('modeMovie').onclick = () => { playSound('click'); switchMode('movie'); };
+            document.getElementById('modeTV').onclick = () => { playSound('click'); switchMode('tv'); };
+            
+            document.getElementById('surpriseBtn').onclick = () => { playSound('click'); surpriseMe(); };
+            document.getElementById('showResultsBtn').onclick = () => { playSound('click'); fetchGridResults(true); }; 
+            document.getElementById('loadMoreBtn').onclick = () => { playSound('click'); fetchGridResults(false); };
+            
+            document.getElementById('toggleTrailerBtn').onclick = () => { playSound('click'); toggleTrailer(); };
+            document.getElementById('viewWatchlistBtn').onclick = () => { playSound('click'); showWatchlist(); };
+            document.getElementById('addToWatchlistBtn').onclick = () => { toggleWatchlistCurrent(); };
+            document.getElementById('openBoxOfficeBtn').onclick = () => { playSound('click'); fetchBoxOffice(true); };
+            
+            document.getElementById('hiddenGemsBtn').onclick = () => { playSound('click'); fetchHiddenGems(); };
+            document.getElementById('openStatsBtn').onclick = () => { playSound('click'); toggleStats(true); };
+            document.getElementById('closeStatsBtn').onclick = () => { playSound('click'); toggleStats(false); };
+            
+
+            // Double Tap on Poster
+            const posterArea = document.getElementById('posterArea');
+            const posterCol = document.getElementById('posterCol');
+            
+            posterArea.addEventListener('click', (e) => {
+                const now = new Date().getTime();
+                if (now - lastTap < 300) {
+                    // Double Tap
+                    toggleWatchlistCurrent(true); 
+                    showLikeAnimation();
+                } else {
+                    // Single Click - Open Lightbox
+                    setTimeout(() => {
+                        if(new Date().getTime() - lastTap > 300) {
+                            openLightbox();
+                        }
+                    }, 300);
+                }
+                lastTap = now;
+            });
+            
+            // 3D Tilt Logic
+            posterCol.addEventListener('mousemove', (e) => {
+                if(window.innerWidth < 768) return; // Disable on mobile
+                const { left, top, width, height } = posterCol.getBoundingClientRect();
+                const x = (e.clientX - left) / width;
+                const y = (e.clientY - top) / height;
+                
+                const tiltX = (0.5 - y) * 20; // 20deg tilt
+                const tiltY = (x - 0.5) * 20;
+                
+                posterArea.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.05)`;
+            });
+            
+            posterCol.addEventListener('mouseleave', () => {
+                posterArea.style.transform = `rotateX(0) rotateY(0) scale(1)`;
+            });
+
+            // Settings Listeners
+            document.getElementById('openSettingsBtn').onclick = () => { playSound('click'); toggleSettings(true); };
+            document.getElementById('closeSettingsBtn').onclick = () => { playSound('click'); toggleSettings(false); };
+            document.getElementById('regionSelect').onchange = (e) => {
+                settings.region = e.target.value;
+                saveSettings();
+                showError("Region updated to " + e.target.value);
+            };
+            document.getElementById('soundToggle').onclick = toggleSound;
+            document.getElementById('clearHistoryBtn').onclick = clearHistory;
+
+            // Trending Scroll Buttons
+            document.getElementById('scrollTrendLeft').onclick = () => scrollTrending(-300);
+            document.getElementById('scrollTrendRight').onclick = () => scrollTrending(300);
+            
+            // Cast Scroll Buttons
+            document.getElementById('scrollCastLeft').onclick = () => scrollCast(-200);
+            document.getElementById('scrollCastRight').onclick = () => scrollCast(200);
+
+            // Collection Button
+            document.getElementById('collectionBtn').onclick = fetchCollectionDetails;
+            document.getElementById('boLoadMoreBtn').onclick = () => fetchBoxOffice(false);
 
             window.addEventListener('resize', () => {
                 const c = document.getElementById('confetti');
@@ -442,15 +1211,378 @@
                 c.width = window.innerWidth;
                 c.height = window.innerHeight;
             });
+            
+            // Shake Event
+            window.addEventListener('devicemotion', (event) => {
+                if(document.getElementById('genreSelectionView').classList.contains('hidden')) return; // Only on home
+                
+                const acc = event.accelerationIncludingGravity;
+                if(!acc) return;
+                
+                const threshold = 25; // Sensitivity
+                if (Math.abs(acc.x) > threshold || Math.abs(acc.y) > threshold || Math.abs(acc.z) > threshold) {
+                    // Debounce
+                    if(Date.now() - lastTap > 2000) { 
+                        lastTap = Date.now();
+                        document.body.classList.add('animate-shake');
+                        setTimeout(() => document.body.classList.remove('animate-shake'), 500);
+                        surpriseMe();
+                    }
+                }
+            });
 
             // Search Listeners
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', handleSearch);
             document.getElementById('clearSearch').onclick = () => {
+                playSound('click');
                 searchInput.value = '';
                 document.getElementById('searchResults').classList.add('hidden');
                 document.getElementById('clearSearch').classList.add('hidden');
             };
+            
+            // Add hover sounds to buttons generally
+            document.querySelectorAll('button').forEach(b => {
+                b.addEventListener('mouseenter', () => playSound('hover'));
+            });
+
+            // KEYBOARD SHORTCUTS
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'Escape') {
+                    // Close views in order of priority
+                    if(!document.getElementById('lightbox').classList.contains('hidden')) {
+                        closeLightbox();
+                    } else if (!document.getElementById('settingsModal').classList.contains('hidden')) {
+                        toggleSettings(false);
+                    } else if (!document.getElementById('statsModal').classList.contains('hidden')) {
+                        toggleStats(false);
+                    } else {
+                        // Use goBack for generic nav
+                        goBack();
+                    }
+                } else if ((e.key === 's' || e.key === '/') && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                } else if (e.key === 'm' && document.activeElement !== searchInput) {
+                    // Toggle mode
+                    if(currentMode === 'movie') switchMode('tv');
+                    else switchMode('movie');
+                }
+            });
+            
+            // Start ambient particles
+            startAmbientParticles();
+        }
+
+        // --- STATS LOGIC ---
+        function calculateStats() {
+            const viewedCount = history.length;
+            const savedCount = watchlist.length;
+            
+            document.getElementById('statViewed').textContent = viewedCount;
+            document.getElementById('statSaved').textContent = savedCount;
+            
+            // Calculate Rank
+            let rank = "Novice Watcher";
+            if(viewedCount > 5) rank = "Film Buff";
+            if(viewedCount > 20) rank = "Cinephile";
+            if(viewedCount > 50) rank = "Movie Master";
+            document.getElementById('userRank').textContent = rank;
+            
+            // Calculate Favorite Genre
+            const genreCounts = {};
+            history.forEach(item => {
+                if(item.genre_ids && item.genre_ids.length > 0) {
+                    item.genre_ids.forEach(id => {
+                        genreCounts[id] = (genreCounts[id] || 0) + 1;
+                    });
+                }
+            });
+            
+            let topGenreId = null;
+            let maxCount = 0;
+            for(const [id, count] of Object.entries(genreCounts)) {
+                if(count > maxCount) {
+                    maxCount = count;
+                    topGenreId = id;
+                }
+            }
+            
+            let topGenreName = "-";
+            if(topGenreId) {
+                // Find Name
+                const allGenres = {...MOVIE_GENRES, ...TV_GENRES};
+                for(const [name, data] of Object.entries(allGenres)) {
+                    if(data.id == topGenreId) {
+                        topGenreName = name;
+                        break;
+                    }
+                }
+            }
+            document.getElementById('statGenre').textContent = topGenreName;
+        }
+
+        function toggleStats(show) {
+            const el = document.getElementById('statsModal');
+            if(show) {
+                calculateStats();
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+        
+        function toggleCinemaMode() {
+             document.body.classList.toggle('cinema-mode');
+        }
+        
+        // --- AMBIENT PARTICLES ---
+        function startAmbientParticles() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            const particles = [];
+            const particleCount = 40;
+
+            for(let i=0; i<particleCount; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    r: Math.random() * 2 + 0.5,
+                    d: Math.random() * particleCount, // density
+                    vx: (Math.random() - 0.5) * 0.2,
+                    vy: (Math.random() - 0.5) * 0.2,
+                    alpha: Math.random() * 0.5 + 0.1
+                });
+            }
+
+            function draw() {
+                // If party mode is active, don't draw ambient to avoid conflict (confetti handles clearRect)
+                if(document.body.classList.contains('party-mode')) {
+                    requestAnimationFrame(draw);
+                    return;
+                }
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.beginPath();
+                
+                for(let i = 0; i < particleCount; i++) {
+                    const p = particles[i];
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+                    ctx.moveTo(p.x, p.y);
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, true);
+                }
+                ctx.fill();
+                update();
+                requestAnimationFrame(draw);
+            }
+
+            function update() {
+                for(let i = 0; i < particleCount; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Re-enter from sides
+                    if(p.x > width + 5) p.x = -5;
+                    if(p.x < -5) p.x = width + 5;
+                    if(p.y > height + 5) p.y = -5;
+                    if(p.y < -5) p.y = height + 5;
+                }
+            }
+
+            draw();
+
+            window.addEventListener('resize', () => {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            });
+        }
+
+
+        // --- NAVIGATION HELPERS ---
+        function pushView(viewId) {
+            // Push current visible view to stack before switching
+            // Identify currently visible view
+            const views = ['genreSelectionView', 'gridResultsView', 'resultView', 'boxOfficeView'];
+            let current = views.find(v => !document.getElementById(v).classList.contains('hidden'));
+            
+            // If pushing same view, ignore (unless context changed significantly, but simple logic for now)
+            if(viewStack.length > 0 && viewStack[viewStack.length-1] === viewId) return;
+            
+            if(current && current !== viewId) {
+                viewStack.push(current);
+            }
+            
+            // Hide all
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            // Show new
+            document.getElementById(viewId).classList.remove('hidden');
+            
+            // Special handling for backgrounds/resets if needed
+            if(viewId === 'genreSelectionView') {
+                updateBackground('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg');
+                viewStack = []; // Clear stack when hitting home
+            }
+        }
+
+        function goBack() {
+            playSound('click');
+            if(viewStack.length === 0) {
+                // If nothing in stack, try to go home or just stay (already at root)
+                if(document.getElementById('genreSelectionView').classList.contains('hidden')) {
+                    resetApp();
+                }
+                return;
+            }
+            
+            const prevView = viewStack.pop();
+            const views = ['genreSelectionView', 'gridResultsView', 'resultView', 'boxOfficeView'];
+            
+            // Hide current
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            
+            // Show previous
+            document.getElementById(prevView).classList.remove('hidden');
+            
+            // Restoration logic
+            if(prevView === 'genreSelectionView') {
+                updateBackground('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg');
+            } else if (prevView === 'gridResultsView') {
+                // If returning to grid, ensure filtered background is kept or generic
+                // updateBackground(...) - keep current or set to generic
+            }
+            
+            // Clean up trailer
+            document.getElementById('inlineTrailer').innerHTML = '';
+        }
+
+        // --- UTILS ---
+        function formatMoney(amount) {
+            if (!amount) return '-';
+            if (amount >= 1000000000) {
+                return '$' + (amount / 1000000000).toFixed(1) + 'B';
+            }
+            return '$' + (amount / 1000000).toFixed(1) + 'M';
+        }
+        
+        function formatDate(dateString) {
+            if(!dateString) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+        
+        function downloadPoster() {
+             if(!currentItem || !currentItem.poster_path) return;
+             const link = document.createElement('a');
+             link.href = IMG_URL + currentItem.poster_path;
+             link.download = `Poster-${currentItem.id}.jpg`;
+             link.target = '_blank';
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+             showError("Opening high-res poster...");
+        }
+
+        function saveSettings() {
+            localStorage.setItem('watchNextSettings', JSON.stringify(settings));
+        }
+
+        function toggleSettings(show) {
+            const el = document.getElementById('settingsModal');
+            if(show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function toggleSound() {
+            settings.sound = !settings.sound;
+            updateSoundToggleUI();
+            saveSettings();
+            if(settings.sound) playSound('success');
+        }
+
+        function updateSoundToggleUI() {
+            const btn = document.getElementById('soundToggle');
+            const dot = btn.querySelector('div');
+            if(settings.sound) {
+                btn.classList.add('bg-brand');
+                btn.classList.remove('bg-slate-700');
+                dot.style.transform = 'translateX(24px)';
+            } else {
+                btn.classList.remove('bg-brand');
+                btn.classList.add('bg-slate-700');
+                dot.style.transform = 'translateX(0)';
+            }
+        }
+
+        function setTheme(themeClass) {
+            document.body.className = "flex flex-col h-[100dvh] w-full selection:bg-brand/30 " + themeClass;
+            settings.theme = themeClass;
+            saveSettings();
+            updateSoundToggleUI(); 
+            playSound('click');
+        }
+        
+        function scrollTrending(amount) {
+            const list = document.getElementById('trendingList');
+            list.scrollBy({ left: amount, behavior: 'smooth' });
+        }
+        
+        function scrollCast(amount) {
+            const list = document.getElementById('castList');
+            list.scrollBy({ left: amount, behavior: 'smooth' });
+        }
+        
+        function clearHistory() {
+            history = [];
+            localStorage.removeItem('watchNextHistory');
+            showError("History Cleared");
+            if(isWatchlistMode) renderWatchlistGrid(); 
+            calculateStats();
+        }
+        
+        function shareApp() {
+            const text = "Check out WatchNext - The Ultimate Movie Picker!";
+            const url = window.location.href;
+            if(navigator.share) {
+                navigator.share({ title: 'WatchNext', text: text, url: url });
+            } else {
+                navigator.clipboard.writeText(url);
+                showError("Link copied to clipboard!");
+            }
+        }
+
+        function handleLogoClick() {
+            logoClickCount++;
+            clearTimeout(logoClickTimeout);
+            logoClickTimeout = setTimeout(() => logoClickCount = 0, 2000); 
+
+            if(logoClickCount === 1) {
+                resetApp(); 
+            } else if (logoClickCount === 5) {
+                // EASTER EGG TRIGGER
+                document.body.classList.toggle('party-mode');
+                if(document.body.classList.contains('party-mode')) {
+                    fireConfetti(true); 
+                    showError("🎉 PARTY MODE ACTIVATED! 🎉");
+                    
+                    // AUTO STOP logic - 3 Seconds (Requested)
+                    setTimeout(() => {
+                        document.body.classList.remove('party-mode');
+                        showError("Party's over! Back to movies.");
+                    }, 3000); 
+                } else {
+                    document.location.reload();
+                }
+                logoClickCount = 0;
+            }
         }
 
         function updateBackground(url) {
@@ -471,64 +1603,126 @@
                 icon.style.transform = 'rotate(0deg)';
             }
         }
+        
+        // --- LIGHTBOX ---
+        function openLightbox() {
+            if(!currentItem || !currentItem.poster_path) return;
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+            img.src = IMG_URL + currentItem.poster_path;
+            lb.classList.remove('hidden');
+        }
+        
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+        }
 
         // --- NAVIGATION ---
         function switchMode(mode) {
             currentMode = mode;
-            // Update Toggle UI
-            const activeClass = "px-3 py-1.5 rounded-full text-[11px] font-bold transition-all bg-rose-600 text-white shadow-lg";
-            const inactiveClass = "px-3 py-1.5 rounded-full text-[11px] font-bold text-slate-400 hover:text-white transition-all";
+            // Update Toggle UI Desktop
+            const activeClass = "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all bg-brand text-white shadow-lg ring-1 ring-white/20";
+            const inactiveClass = "px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-400 hover:text-white transition-all hover:bg-white/5";
             
             document.getElementById('modeMovie').className = mode === 'movie' ? activeClass : inactiveClass;
             document.getElementById('modeTV').className = mode === 'tv' ? activeClass : inactiveClass;
-            document.getElementById('modeDescription').textContent = mode === 'movie' ? "Browsing Movies" : "Browsing TV Series";
             
-            renderGenres();
+            // Mobile Toggles
+             document.getElementById('modeMovieMobile').className = mode === 'movie' ? activeClass : inactiveClass;
+             document.getElementById('modeTVMobile').className = mode === 'tv' ? activeClass : inactiveClass;
+
+            updateGenreDropdown();
             lucide.createIcons();
+            fetchTrending(); 
         }
 
         function resetApp() {
+            playSound('click');
+            // Force reset view stack
+            viewStack = [];
+            
             document.getElementById('resultView').classList.add('hidden');
+            document.getElementById('gridResultsView').classList.add('hidden');
+            document.getElementById('boxOfficeView').classList.add('hidden');
             document.getElementById('genreSelectionView').classList.remove('hidden');
             document.getElementById('posterArea').innerHTML = '';
             document.getElementById('inlineTrailer').innerHTML = '';
+            document.body.classList.remove('cinema-mode'); 
             updateBackground('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg');
             
-            // Reset Trailer State
+            isGridOpen = false;
+            isWatchlistMode = false;
             isTrailerExpanded = false;
             document.getElementById('inlineTrailerContainer').classList.remove('expanded');
             document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
-            document.getElementById('toggleTrailerBtn').parentElement.classList.add('hidden'); // Hide trailer box by default
+            document.getElementById('toggleTrailerBtn').parentElement.classList.add('hidden'); 
             
-            // Reset mobile scroll
             document.getElementById('contentScrollArea').scrollTop = 0;
-            // Desktop reset (if independently scrolled)
             document.getElementById('detailsCol').scrollTop = 0;
         }
+        
+        function closeResultView() {
+            // Deprecated in favor of goBack(), but kept for button compatibility
+            goBack();
+        }
 
-        function renderGenres() {
-            const grid = document.getElementById('genreGrid');
-            grid.innerHTML = '';
-            const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
-
-            Object.entries(GENRES).forEach(([name, data]) => {
-                const btn = document.createElement('button');
-                btn.className = "group relative h-24 bg-slate-800/40 hover:bg-rose-600 rounded-xl border border-white/5 transition-all overflow-hidden flex flex-col items-center justify-center gap-1 active:scale-95 shadow-md";
+        // --- TRENDING ---
+        async function fetchTrending() {
+            try {
+                const res = await fetch(`${BASE_URL}/trending/${currentMode}/day?api_key=${API_KEY}`);
+                const data = await res.json();
+                const list = document.getElementById('trendingList');
+                list.innerHTML = '';
                 
-                let iconEl;
-                if(data.icon === 'sword') iconEl = '<i data-lucide="sword" class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors"></i>';
-                else if(data.icon === 'ghost') iconEl = '<div class="text-2xl group-hover:scale-110 transition-transform">👻</div>';
-                else iconEl = `<i data-lucide="${data.icon}" class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors"></i>`;
+                data.results.slice(0, 10).forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "flex-shrink-0 w-32 snap-start cursor-pointer hover:scale-105 transition-transform";
+                    div.innerHTML = `
+                        <div class="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg border border-white/10">
+                            <img src="${PROFILE_URL}${item.poster_path}" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                                <span class="text-[10px] text-white font-bold line-clamp-1">${item.title || item.name}</span>
+                            </div>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        playSound('click');
+                        pushView('genreSelectionView'); // Mark home as origin
+                        loadItemDetails(item.id);
+                    };
+                    list.appendChild(div);
+                });
+            } catch(e) { console.error(e); }
+        }
 
+        // --- RENDERING MOODS ---
+        function renderMoods() {
+            const grid = document.getElementById('moodGrid');
+            grid.innerHTML = '';
+            
+            MOODS.forEach(mood => {
+                const btn = document.createElement('button');
+                btn.className = "mood-card group relative h-24 bg-slate-800/40 hover:bg-brand/40 rounded-xl border border-white/5 transition-all overflow-hidden flex flex-col items-center justify-center gap-1 active:scale-95 shadow-md ring-1 ring-white/5";
+                
                 btn.innerHTML = `
                     <div class="z-10 flex flex-col items-center gap-1">
-                        ${iconEl}
-                        <span class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">${name}</span>
+                        <span class="text-3xl group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg">${mood.emoji}</span>
+                        <span class="text-xs font-bold text-slate-300 group-hover:text-white transition-colors uppercase tracking-wider">${mood.label}</span>
                     </div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 `;
-                btn.onclick = () => fetchContent(data.id);
+                btn.onclick = () => { playSound('click'); fetchByMood(mood); };
+                btn.onmouseenter = () => playSound('hover');
                 grid.appendChild(btn);
+            });
+        }
+
+        function updateGenreDropdown() {
+            const select = document.getElementById('genreFilter');
+            const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
+            select.innerHTML = '<option value="" class="bg-slate-900">All Genres</option>';
+            Object.entries(GENRES).forEach(([name, data]) => {
+                select.innerHTML += `<option value="${data.id}" class="bg-slate-900">${name}</option>`;
             });
         }
 
@@ -557,7 +1751,12 @@
                         resultsDiv.innerHTML = '';
                         resultsDiv.classList.remove('hidden');
                         
-                        const filtered = data.results.filter(item => item.media_type === 'movie' || item.media_type === 'tv').slice(0, 8);
+                        // Filter for movie, tv, AND person
+                        const filtered = data.results.filter(item => 
+                            item.media_type === 'movie' || 
+                            item.media_type === 'tv' || 
+                            item.media_type === 'person'
+                        ).slice(0, 8);
 
                         if(filtered.length === 0) {
                              resultsDiv.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No results found</div>';
@@ -565,32 +1764,51 @@
                         }
 
                         filtered.forEach(item => {
-                            if(!item.poster_path && !item.backdrop_path) return;
+                            // Check for image based on media type
+                            let imgPath = item.poster_path;
+                            if(item.media_type === 'person') imgPath = item.profile_path;
+                            
+                            if(!imgPath && !item.backdrop_path) return; // Skip if no image
                             
                             const div = document.createElement('div');
                             div.className = "flex items-center gap-4 p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 transition-colors";
-                            const img = item.poster_path ? `${POSTER_URL}${item.poster_path}` : 'https://via.placeholder.com/50x75?text=No+Img';
+                            const img = imgPath ? `${PROFILE_URL}${imgPath}` : 'https://via.placeholder.com/50x75?text=No+Img';
                             const title = item.title || item.name;
                             const year = (item.release_date || item.first_air_date || '').split('-')[0];
-                            const type = item.media_type === 'movie' ? 'Movie' : 'TV Series';
+                            
+                            // Determine subtitle
+                            let subText = '';
+                            if(item.media_type === 'person') {
+                                subText = `<span class="uppercase tracking-wider font-semibold text-purple-400">Person</span>`;
+                            } else {
+                                const type = item.media_type === 'movie' ? 'Movie' : 'TV Series';
+                                subText = `<span class="uppercase tracking-wider font-semibold text-brand">${type}</span> <span>${year}</span>`;
+                            }
                             
                             div.innerHTML = `
                                 <img src="${img}" class="w-10 h-14 object-cover rounded-md shadow-md bg-slate-800">
                                 <div class="flex flex-col text-left">
                                     <span class="text-sm font-bold text-white leading-tight mb-0.5 line-clamp-1">${title}</span>
                                     <div class="flex items-center gap-2 text-[10px] text-slate-400">
-                                        <span class="uppercase tracking-wider font-semibold text-rose-400">${type}</span>
-                                        <span>${year}</span>
+                                        ${subText}
                                     </div>
                                 </div>
                             `;
                             div.onclick = () => {
-                                switchMode(item.media_type);
-                                loadItemDetails(item.id);
+                                playSound('click');
+                                // Handle Person Click specially
+                                if(item.media_type === 'person') {
+                                    fetchPersonCredits(item.id, item.name, 'cast');
+                                } else {
+                                    switchMode(item.media_type);
+                                    pushView('genreSelectionView'); // Mark current view before switching
+                                    loadItemDetails(item.id);
+                                }
                                 document.getElementById('searchInput').value = '';
                                 resultsDiv.classList.add('hidden');
                                 document.getElementById('clearSearch').classList.add('hidden');
                             };
+                            div.onmouseenter = () => playSound('hover');
                             resultsDiv.appendChild(div);
                         });
                     } else {
@@ -604,35 +1822,115 @@
         }
 
         // --- FETCH LOGIC ---
+        function getCommonParams() {
+            const year = document.getElementById('decadeFilter').value;
+            const lang = document.getElementById('languageFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+            const runtime = document.getElementById('runtimeFilter').value;
+            const genre = document.getElementById('genreFilter').value; 
+            
+            // New Filters
+            const provider = document.getElementById('providerFilter').value;
+            const rating = document.getElementById('ratingFilter').value;
+
+            let params = `&sort_by=${sort}&vote_count.gte=100`;
+            if(lang) params += `&with_original_language=${lang}`;
+            if(genre) params += `&with_genres=${genre}`;
+            
+            // Provider Logic
+            if(provider) {
+                // Use settings region
+                params += `&with_watch_providers=${provider}&watch_region=${settings.region}`;
+            }
+
+            // Rating Logic
+            if(rating) {
+                params += `&vote_average.gte=${rating}`;
+            }
+            
+            const dateKey = currentMode === 'movie' ? 'primary_release_date' : 'first_air_date';
+            if(year === '2024') params += `&${dateKey}.gte=2024-01-01`;
+            else if(year === '2020') params += `&${dateKey}.gte=2020-01-01&${dateKey}.lte=2023-12-31`; 
+            else if(year === '2010') params += `&${dateKey}.gte=2010-01-01&${dateKey}.lte=2019-12-31`;
+            else if(year === '2000') params += `&${dateKey}.gte=2000-01-01&${dateKey}.lte=2009-12-31`;
+            else if(year === '1990') params += `&${dateKey}.gte=1990-01-01&${dateKey}.lte=1999-12-31`;
+            else if(year === '1980') params += `&${dateKey}.gte=1980-01-01&${dateKey}.lte=1989-12-31`;
+
+            if (runtime === 'short') params += `&with_runtime.lte=90`;
+            else if (runtime === 'medium') params += `&with_runtime.gte=90&with_runtime.lte=120`;
+            else if (runtime === 'long') params += `&with_runtime.gte=120`;
+            
+            return params;
+        }
+
         function surpriseMe() {
             fireConfetti();
-            const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
-            const keys = Object.values(GENRES);
-            const random = keys[Math.floor(Math.random() * keys.length)];
-            fetchContent(random.id);
+            const genreVal = document.getElementById('genreFilter').value;
+            if(genreVal) {
+                fetchContent(genreVal);
+            } else {
+                const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
+                const keys = Object.values(GENRES);
+                const random = keys[Math.floor(Math.random() * keys.length)];
+                fetchContent(random.id);
+            }
+        }
+        
+        async function fetchHiddenGems() {
+            showLoading(true);
+            try {
+                // Logic: High rating (>=7.5), fewer votes (100-5000), recent enough (>=2000)
+                let params = `&vote_average.gte=7.5&vote_count.gte=100&vote_count.lte=5000&sort_by=vote_average.desc&primary_release_date.gte=2000-01-01`;
+                const res = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=1&include_adult=false${params}`);
+                const data = await res.json();
+                
+                if (!data.results || data.results.length === 0) {
+                    throw new Error("No gems found.");
+                }
+                
+                document.getElementById('gridTitle').textContent = "Hidden Gems";
+                // Render Logic similar to fetchGridResults
+                currentPage = 1;
+                loadedIds.clear();
+                gridItems = [];
+                const grid = document.getElementById('gridContainer');
+                grid.innerHTML = '';
+                document.getElementById('loadMoreBtn').classList.add('hidden');
+                
+                data.results.forEach(item => {
+                    if(!item.poster_path) return;
+                    loadedIds.add(item.id);
+                    gridItems.push(item);
+                    createGridCard(item, grid);
+                });
+                
+                pushView('genreSelectionView'); // Mark origin
+                document.getElementById('genreSelectionView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.remove('hidden');
+                
+            } catch(e) {
+                console.error(e);
+                showError("Could not find hidden gems.");
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // MOOD Logic
+        function fetchByMood(moodObj) {
+            const genreString = moodObj.genres.join('|');
+            fetchContent(genreString);
         }
 
         async function fetchContent(genreId) {
             showLoading(true);
             try {
-                const year = document.getElementById('decadeFilter').value;
-                const lang = document.getElementById('languageFilter').value;
-                const sort = document.getElementById('sortFilter').value;
-                const runtime = document.getElementById('runtimeFilter').value;
-                
-                let params = `&with_genres=${genreId}&sort_by=${sort}&vote_count.gte=100`;
-                if(lang) params += `&with_original_language=${lang}`;
-                
-                const dateKey = currentMode === 'movie' ? 'primary_release_date' : 'first_air_date';
-                if(year === '2024') params += `&${dateKey}.gte=2024-01-01`;
-                else if(year === '1980') params += `&${dateKey}.gte=1980-01-01&${dateKey}.lte=1989-12-31`;
-                else if(year) params += `&${dateKey}.gte=${year}-01-01&${dateKey}.lte=${parseInt(year)+9}-12-31`;
+                let params = getCommonParams();
+                if(genreId) {
+                    params = params.replace(/&with_genres=[^&]*/, '');
+                    params += `&with_genres=${genreId}`;
+                }
 
-                if (runtime === 'short') params += `&with_runtime.lte=90`;
-                else if (runtime === 'medium') params += `&with_runtime.gte=90&with_runtime.lte=120`;
-                else if (runtime === 'long') params += `&with_runtime.gte=120`;
-
-                // SMART PAGINATION
                 const initRes = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=1&include_adult=false${params}`);
                 const initData = await initRes.json();
 
@@ -650,11 +1948,16 @@
 
                 if(!results || results.length === 0) throw new Error("No content on this page");
                 
-                // Filter out items without posters to ensure good UI
                 const validResults = results.filter(r => r.poster_path);
                 if (validResults.length === 0) throw new Error("No good matches found");
 
                 const item = validResults[Math.floor(Math.random() * validResults.length)];
+                
+                // Navigation
+                pushView('genreSelectionView');
+                
+                isGridOpen = false;
+                isWatchlistMode = false;
                 await loadItemDetails(item.id);
                 
             } catch (err) {
@@ -664,12 +1967,454 @@
             }
         }
 
+        // --- WATCHLIST & HISTORY LOGIC ---
+        function toggleWatchlistCurrent(forceAdd = false) {
+            if(!currentItem) return;
+            
+            const btn = document.getElementById('addToWatchlistBtn');
+            const existsIndex = watchlist.findIndex(i => i.id === currentItem.id);
+            
+            if(existsIndex >= 0 && !forceAdd) {
+                // Remove
+                watchlist.splice(existsIndex, 1);
+                playSound('click');
+                btn.classList.remove('text-brand', 'bg-brand/20');
+                btn.classList.add('text-slate-300', 'bg-slate-800');
+                btn.innerHTML = '<i data-lucide="heart" class="w-5 h-5"></i>';
+                showError("Removed from My List");
+            } else if (existsIndex === -1 || forceAdd) {
+                // Add
+                if(existsIndex === -1) {
+                    const minimalItem = getMinimalItem(currentItem);
+                    watchlist.push(minimalItem);
+                }
+                playSound('success');
+                btn.classList.add('text-brand', 'bg-brand/20');
+                btn.classList.remove('text-slate-300', 'bg-slate-800');
+                btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+                fireConfetti();
+                if(forceAdd) {
+                    // Don't show toast if double tapping
+                } else {
+                    showError("Added to My List");
+                }
+            }
+            
+            localStorage.setItem('watchNextList', JSON.stringify(watchlist));
+            calculateStats();
+            lucide.createIcons();
+            
+            if(isWatchlistMode) {
+                renderWatchlistGrid();
+            }
+        }
+        
+        function showLikeAnimation() {
+            const overlay = document.getElementById('likeOverlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 600);
+        }
+        
+        function addToHistory(item) {
+            const minItem = getMinimalItem(item);
+            // Remove if exists
+            history = history.filter(h => h.id !== item.id);
+            // Add to front
+            history.unshift(minItem);
+            // Cap at 10
+            if(history.length > 10) history.pop();
+            
+            localStorage.setItem('watchNextHistory', JSON.stringify(history));
+            calculateStats();
+        }
+
+        function getMinimalItem(item) {
+            // Extract genre IDs
+            let gIds = item.genre_ids || [];
+            if(item.genres) {
+                gIds = item.genres.map(g => g.id);
+            }
+            
+             return {
+                id: item.id,
+                title: item.title || item.name,
+                poster_path: item.poster_path,
+                vote_average: item.vote_average,
+                release_date: item.release_date || item.first_air_date,
+                media_type: currentMode,
+                genre_ids: gIds
+            };
+        }
+        
+        function updateWatchlistBtnState() {
+            const btn = document.getElementById('addToWatchlistBtn');
+             if(!currentItem) return;
+            const exists = watchlist.some(i => i.id === currentItem.id);
+            if(exists) {
+                btn.classList.add('text-brand', 'bg-brand/20');
+                btn.classList.remove('text-slate-300', 'bg-slate-800');
+                btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+            } else {
+                btn.classList.remove('text-brand', 'bg-brand/20');
+                btn.classList.add('text-slate-300', 'bg-slate-800');
+                btn.innerHTML = '<i data-lucide="heart" class="w-5 h-5"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        function showWatchlist() {
+            playSound('click');
+            pushView('genreSelectionView'); // Push origin
+            isWatchlistMode = true;
+            isGridOpen = false;
+            document.getElementById('gridTitle').textContent = "My Library";
+            document.getElementById('loadMoreBtn').classList.add('hidden');
+            renderWatchlistGrid();
+            
+            document.getElementById('genreSelectionView').classList.add('hidden');
+            document.getElementById('resultView').classList.add('hidden');
+            document.getElementById('boxOfficeView').classList.add('hidden');
+            document.getElementById('gridResultsView').classList.remove('hidden');
+        }
+
+        function renderWatchlistGrid() {
+            const grid = document.getElementById('gridContainer');
+            const empty = document.getElementById('emptyListState');
+            const historySection = document.getElementById('historySection');
+            const historyGrid = document.getElementById('historyGrid');
+            
+            grid.innerHTML = '';
+            historyGrid.innerHTML = '';
+            gridItems = []; // reset global grid items
+            
+            if(watchlist.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                const listToRender = [...watchlist].reverse();
+                listToRender.forEach(item => {
+                    if(!item.poster_path) return;
+                    gridItems.push(item);
+                    createGridCard(item, grid);
+                });
+            }
+
+            if(history.length > 0) {
+                historySection.classList.remove('hidden');
+                history.forEach(item => {
+                    createGridCard(item, historyGrid, true);
+                });
+            } else {
+                historySection.classList.add('hidden');
+            }
+            
+            lucide.createIcons();
+        }
+
+        // --- GRID RENDERING ---
+        function createGridCard(item, container, isSmall = false) {
+            const div = document.createElement('div');
+            div.className = `grid-card relative rounded-xl overflow-hidden cursor-pointer shadow-lg aspect-[2/3] bg-slate-800 border border-white/5 group ring-1 ring-white/5 ${isSmall ? 'opacity-80 hover:opacity-100' : ''}`;
+            
+            const title = item.title || item.name;
+            const rating = item.vote_average ? item.vote_average.toFixed(1) : '-';
+            const year = (item.release_date || item.first_air_date || '').split('-')[0] || '';
+            const genreName = getGenreName(item.genre_ids || []) || '';
+
+            div.innerHTML = `
+                <img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover" loading="lazy">
+                
+                <!-- Quick Action Overlay -->
+                <div class="grid-card-overlay absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-0 transition-opacity duration-300 flex flex-col justify-end p-3">
+                    <button class="quick-add-btn absolute top-2 right-2 p-2 bg-black/40 hover:bg-brand rounded-full text-white backdrop-blur-md transition-all active:scale-90 hover:animate-pulse" title="Quick Add">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </button>
+                    
+                    <span class="text-xs font-bold text-white leading-tight mb-1 drop-shadow-md line-clamp-2">${title}</span>
+                    <div class="flex items-center justify-between text-[10px] text-slate-300 font-medium">
+                        <span>${year}</span>
+                        <span>${genreName}</span>
+                    </div>
+                </div>
+                
+                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-white border border-white/10 shadow-sm z-10 flex items-center gap-1">
+                   <i data-lucide="star" class="w-3 h-3 text-amber-400 fill-current"></i> ${rating}
+                </div>
+            `;
+            
+            // Quick Add Listener
+            const quickBtn = div.querySelector('.quick-add-btn');
+            if(quickBtn) quickBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent opening details
+                currentItem = item; // Temporarily set currentItem to add
+                toggleWatchlistCurrent();
+            };
+
+            div.onclick = () => {
+                playSound('click');
+                // Navigation Logic
+                // If we are currently in grid results, push that as origin
+                const currentView = document.querySelector('div[id$="View"]:not(.hidden)').id;
+                pushView(currentView);
+                
+                if(item.media_type) currentMode = item.media_type;
+                loadItemDetails(item.id);
+            };
+            div.onmouseenter = () => playSound('hover');
+            container.appendChild(div);
+        }
+        
+        function getGenreName(ids) {
+            if(!ids || ids.length === 0) return '';
+            const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
+            // Reverse lookup ID to Name
+            for (const [name, data] of Object.entries(GENRES)) {
+                if (data.id === ids[0]) return name;
+            }
+            return '';
+        }
+
+        async function fetchGridResults(reset = true) {
+            if(isFetchingGrid) return;
+            isFetchingGrid = true;
+            isWatchlistMode = false;
+            showLoading(true);
+            
+            // Navigation
+            pushView('genreSelectionView'); // Assume coming from filters
+            
+            document.getElementById('gridTitle').textContent = "Search Results";
+            document.getElementById('emptyListState').classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden');
+            
+            try {
+                if(reset) {
+                    currentPage = 1;
+                    loadedIds.clear();
+                    gridItems = [];
+                    document.getElementById('gridContainer').innerHTML = '';
+                    document.getElementById('loadMoreBtn').classList.add('hidden');
+                }
+
+                const params = getCommonParams();
+                const grid = document.getElementById('gridContainer');
+                
+                const promises = [];
+                for(let i=0; i<3; i++) {
+                    promises.push(fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=${currentPage+i}&include_adult=false${params}`));
+                }
+
+                const responses = await Promise.all(promises);
+                const dataArray = await Promise.all(responses.map(r => r.json()));
+                
+                let allResults = [];
+                dataArray.forEach(data => {
+                   if(data.results) allResults = [...allResults, ...data.results]; 
+                });
+
+                if (allResults.length === 0 && reset) {
+                    throw new Error("No results found matching your filters.");
+                }
+
+                let addedCount = 0;
+                allResults.forEach(item => {
+                    if(!item.poster_path) return;
+                    if(loadedIds.has(item.id)) return;
+                    
+                    loadedIds.add(item.id);
+                    gridItems.push(item);
+                    addedCount++;
+                    createGridCard(item, grid);
+                });
+                
+                currentPage += 3;
+                
+                if(addedCount > 0) {
+                     document.getElementById('loadMoreBtn').classList.remove('hidden');
+                } else {
+                     document.getElementById('loadMoreBtn').classList.add('hidden');
+                }
+                
+                lucide.createIcons();
+                
+                document.getElementById('genreSelectionView').classList.add('hidden');
+                document.getElementById('boxOfficeView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.remove('hidden');
+
+            } catch(e) {
+                console.error(e);
+                if(reset) showError("No matches found. Try changing filters.");
+            } finally {
+                showLoading(false);
+                isFetchingGrid = false;
+            }
+        }
+        
+        // --- BOX OFFICE ---
+        async function fetchBoxOffice(reset = true) {
+            playSound('click');
+            showLoading(true);
+            
+            // Only push view if we are NOT already on the Box Office View (e.g. changing filters)
+            if(document.getElementById('boxOfficeView').classList.contains('hidden')) {
+                pushView('genreSelectionView'); // From home
+            }
+            
+            const language = document.getElementById('boLanguage').value;
+            const year = document.getElementById('boYear').value;
+            const grid = document.getElementById('boGridContainer');
+            
+            if(reset) grid.innerHTML = '';
+            
+            let params = '&sort_by=revenue.desc&vote_count.gte=200'; // Revenue sort
+            
+            if(language) {
+                params += `&with_original_language=${language}`;
+            }
+            
+            if(year !== 'all') {
+                if(year.endsWith('0s')) {
+                    const start = parseInt(year);
+                    const end = start + 9;
+                    params += `&primary_release_date.gte=${start}-01-01&primary_release_date.lte=${end}-12-31`;
+                } else {
+                    params += `&primary_release_year=${year}`;
+                }
+            }
+            
+            currentMode = 'movie'; 
+            
+            try {
+                // Fetch top results
+                const p1 = fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&page=1&include_adult=false${params}`);
+                const r1 = await p1;
+                const d1 = await r1.json();
+                
+                const results = d1.results || [];
+                if(results.length === 0) throw new Error("No data found");
+                
+                // Render initial cards with skeletons or basic info
+                // Note: 'revenue' is NOT in discover results. We must fetch details for top items.
+                // We will fetch details for the top 12 items to be snappy.
+                
+                const topResults = results.slice(0, 12);
+                
+                // Parallel detail fetch
+                const detailPromises = topResults.map(item => 
+                    fetch(`${BASE_URL}/movie/${item.id}?api_key=${API_KEY}`).then(r => r.json())
+                );
+                
+                const detailedItems = await Promise.all(detailPromises);
+                
+                detailedItems.forEach((item, index) => {
+                    if(!item.poster_path) return;
+                    
+                    const div = document.createElement('div');
+                    div.className = `grid-card relative rounded-xl overflow-hidden cursor-pointer shadow-lg aspect-[2/3] bg-slate-800 border border-white/5 group ring-1 ring-white/5`;
+                    const title = item.title;
+                    const revenue = item.revenue && item.revenue > 0 ? formatMoney(item.revenue) : 'Unknown';
+                    
+                    let rankColor = "bg-slate-700";
+                    if(index === 0) rankColor = "bg-yellow-500 text-black";
+                    if(index === 1) rankColor = "bg-slate-300 text-black";
+                    if(index === 2) rankColor = "bg-amber-700 text-white";
+                    
+                    div.innerHTML = `
+                        <img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover" loading="lazy">
+                        <div class="absolute top-2 left-2 w-8 h-8 rounded-full ${rankColor} font-bold flex items-center justify-center text-sm shadow-lg border border-white/20 z-10">
+                            #${index + 1}
+                        </div>
+                        <div class="grid-card-overlay absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-0 transition-opacity duration-300 flex flex-col justify-end p-3">
+                            <span class="text-xs font-bold text-white leading-tight mb-1 drop-shadow-md line-clamp-2">${title}</span>
+                        </div>
+                        
+                        <!-- Always visible revenue -->
+                        <div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold text-green-400 border border-green-500/30 shadow-sm z-10 flex items-center gap-1">
+                           ${revenue}
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        // Nav logic
+                        pushView('boxOfficeView');
+                        loadItemDetails(item.id);
+                    };
+                    grid.appendChild(div);
+                });
+                
+                document.getElementById('genreSelectionView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.add('hidden');
+                document.getElementById('resultView').classList.add('hidden');
+                document.getElementById('boxOfficeView').classList.remove('hidden');
+                lucide.createIcons();
+                
+            } catch(e) {
+                console.error(e);
+                showError("Could not load Box Office data.");
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // --- COMPANY CONTENT SEARCH (NEW) ---
+        async function fetchCompanyContent(id, name, type) {
+            playSound('click');
+            showLoading(true);
+            pushView('resultView');
+            
+            try {
+                let endpoint = '';
+                let sortParam = '';
+                
+                if (type === 'production_companies') {
+                    // Movies by Production Company - Sort by Revenue
+                    endpoint = `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_companies=${id}&sort_by=revenue.desc`;
+                } else {
+                    // TV by Network - Sort by Popularity (revenue unreliable for TV)
+                    endpoint = `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_networks=${id}&sort_by=popularity.desc`;
+                }
+                
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                
+                if(!data.results || data.results.length === 0) throw new Error("No content found");
+                
+                document.getElementById('gridTitle').textContent = name; // Title is Studio Name
+                document.getElementById('emptyListState').classList.add('hidden');
+                document.getElementById('historySection').classList.add('hidden');
+                document.getElementById('loadMoreBtn').classList.add('hidden');
+                
+                const grid = document.getElementById('gridContainer');
+                grid.innerHTML = '';
+                gridItems = [];
+                
+                const validItems = data.results.filter(i => i.poster_path).slice(0, 50);
+                
+                validItems.forEach(item => {
+                    item.media_type = type === 'production_companies' ? 'movie' : 'tv';
+                    gridItems.push(item);
+                    createGridCard(item, grid);
+                });
+                
+                lucide.createIcons();
+                document.getElementById('resultView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.remove('hidden');
+                
+            } catch(e) {
+                console.error(e);
+                showError("Could not load studio content.");
+            } finally {
+                showLoading(false);
+            }
+        }
+
         async function loadItemDetails(id) {
             showLoading(true);
             try {
                 if (!id) throw new Error("Invalid ID");
                 
-                const res = await fetch(`${BASE_URL}/${currentMode}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers,recommendations`);
+                const res = await fetch(`${BASE_URL}/${currentMode}/${id}?api_key=${API_KEY}&append_to_response=credits,keywords,external_ids,videos,watch/providers,recommendations,reviews`);
                 
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 
@@ -680,12 +2425,142 @@
                 }
 
                 currentItem = item;
+                // Update Page Title
+                document.title = `${item.title || item.name} | WatchNext`;
+                addToHistory(item);
+                
                 displayResult(item);
+                updateWatchlistBtnState();
             } catch(e) {
                 console.error("Load Details Error:", e);
                 showError("Failed to load details. Please try again.");
                 showLoading(false);
             }
+        }
+        
+        // --- COLLECTION SEARCH ---
+        async function fetchCollectionDetails() {
+             if(!currentItem || !currentItem.belongs_to_collection) return;
+             playSound('click');
+             showLoading(true);
+             
+             // Navigation
+             pushView('resultView');
+             
+             const colId = currentItem.belongs_to_collection.id;
+             const colName = currentItem.belongs_to_collection.name;
+             
+             try {
+                 const res = await fetch(`${BASE_URL}/collection/${colId}?api_key=${API_KEY}`);
+                 const data = await res.json();
+                 
+                 if(!data.parts || data.parts.length === 0) throw new Error("Collection empty");
+                 
+                 document.getElementById('gridTitle').textContent = colName;
+                 document.getElementById('emptyListState').classList.add('hidden');
+                 document.getElementById('historySection').classList.add('hidden');
+                 document.getElementById('loadMoreBtn').classList.add('hidden');
+                 
+                 const grid = document.getElementById('gridContainer');
+                 grid.innerHTML = '';
+                 gridItems = [];
+                 
+                 const sortedParts = data.parts.sort((a,b) => (a.release_date || '') > (b.release_date || '') ? 1 : -1);
+                 
+                 sortedParts.forEach(part => {
+                     if(!part.poster_path) return;
+                     part.media_type = 'movie'; 
+                     gridItems.push(part);
+                     createGridCard(part, grid);
+                 });
+                 
+                 lucide.createIcons();
+                 document.getElementById('resultView').classList.add('hidden');
+                 document.getElementById('gridResultsView').classList.remove('hidden');
+                 
+             } catch(e) {
+                 console.error(e);
+                 showError("Could not load collection.");
+             } finally {
+                 showLoading(false);
+             }
+        }
+        
+        // --- ACTOR/DIRECTOR CREDITS SEARCH ---
+        async function fetchPersonCredits(id, name, role='cast') {
+            playSound('click');
+            showLoading(true);
+            
+            // Nav
+            pushView('resultView');
+            
+            try {
+                // Determine API endpoint
+                // If it's a director (crew), we want to sort by revenue to show hits
+                // If it's an actor (cast), sort by popularity (usually best proxy for 'hits' in discover) 
+                // BUT user requested 'sort by revenue' for director.
+                // We use /discover/movie with with_crew/with_cast
+                
+                let endpoint = `${BASE_URL}/discover/movie?api_key=${API_KEY}`;
+                
+                if(role === 'crew') {
+                     // For Director: sort by revenue to show biggest hits
+                     endpoint += `&with_crew=${id}&sort_by=revenue.desc`;
+                } else {
+                     // For Actor: also try revenue sort as it often correlates with 'best'/most famous
+                     endpoint += `&with_cast=${id}&sort_by=revenue.desc`; 
+                }
+                
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                
+                if(!data.results || data.results.length === 0) throw new Error("No credits found");
+                
+                document.getElementById('gridTitle').textContent = `${role === 'crew' ? 'Directed by' : 'Starring'}: ${name}`;
+                document.title = `${name} - Filmography | WatchNext`;
+                
+                document.getElementById('emptyListState').classList.add('hidden');
+                document.getElementById('historySection').classList.add('hidden');
+                document.getElementById('loadMoreBtn').classList.add('hidden'); // Pagination handled differently here, keep simple
+                
+                const grid = document.getElementById('gridContainer');
+                grid.innerHTML = '';
+                gridItems = [];
+                
+                // We trust the API sort order (revenue desc)
+                const validItems = data.results.filter(i => i.poster_path);
+                
+                validItems.forEach(item => {
+                    // Ensure media type is set for click handling
+                    item.media_type = 'movie';
+                    gridItems.push(item);
+                    createGridCard(item, grid);
+                });
+                
+                lucide.createIcons();
+                document.getElementById('resultView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.remove('hidden');
+                
+            } catch(e) {
+                console.error(e);
+                showError("Could not load filmography.");
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // --- RANDOM PICK ---
+        function openRandomResult() {
+            if(gridItems.length === 0) {
+                showError("Nothing to pick from!");
+                return;
+            }
+            fireConfetti();
+            const randomItem = gridItems[Math.floor(Math.random() * gridItems.length)];
+            if(randomItem.media_type) currentMode = randomItem.media_type;
+            
+            pushView('gridResultsView'); // Assuming we are in grid view if clicking dice
+            loadItemDetails(randomItem.id);
         }
 
         // --- DISPLAY LOGIC ---
@@ -695,15 +2570,73 @@
                 const date = item.release_date || item.first_air_date || '';
                 const year = date.split('-')[0] || 'N/A';
                 
-                // Text Content
+                // Original Title logic
+                const originalTitleEl = document.getElementById('resOriginalTitle');
+                if(item.original_title && item.original_title !== title) {
+                    originalTitleEl.textContent = `${item.original_title}`;
+                    originalTitleEl.classList.remove('hidden');
+                } else if(item.original_name && item.original_name !== title) {
+                    originalTitleEl.textContent = `${item.original_name}`;
+                    originalTitleEl.classList.remove('hidden');
+                } else {
+                    originalTitleEl.classList.add('hidden');
+                }
+                
                 document.getElementById('resTitle').textContent = title;
                 document.getElementById('resTagline').textContent = item.tagline || '';
                 document.getElementById('resYear').textContent = year;
                 document.getElementById('resRating').innerHTML = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+                document.getElementById('resVoteCount').textContent = `(${item.vote_count || 0} votes)`;
+                document.getElementById('resStatus').textContent = item.status || 'Unknown';
+                // Status Color
+                const statusEl = document.getElementById('resStatus');
+                statusEl.className = "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider hidden md:block " + (item.status === 'Released' || item.status === 'Returning Series' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400');
+                
                 document.getElementById('resPlot').textContent = item.overview || "No synopsis available.";
                 document.getElementById('resGenre').textContent = item.genres?.[0]?.name || 'Unknown';
+                
+                // External Links
+                const ex = item.external_ids || {};
+                const linkImdb = document.getElementById('linkImdb');
+                const linkInsta = document.getElementById('linkInsta');
+                const linkTwitter = document.getElementById('linkTwitter');
+                const linkHome = document.getElementById('linkHome');
+                
+                if(ex.imdb_id) { linkImdb.href = `https://www.imdb.com/title/${ex.imdb_id}`; linkImdb.classList.remove('hidden'); } else linkImdb.classList.add('hidden');
+                if(ex.instagram_id) { linkInsta.href = `https://instagram.com/${ex.instagram_id}`; linkInsta.classList.remove('hidden'); } else linkInsta.classList.add('hidden');
+                if(ex.twitter_id) { linkTwitter.href = `https://twitter.com/${ex.twitter_id}`; linkTwitter.classList.remove('hidden'); } else linkTwitter.classList.add('hidden');
+                if(item.homepage) { linkHome.href = item.homepage; linkHome.classList.remove('hidden'); } else linkHome.classList.add('hidden');
+                
+                // Keywords
+                const kwContainer = document.getElementById('keywordTags');
+                kwContainer.innerHTML = '';
+                const keywords = item.keywords?.keywords || item.keywords?.results || [];
+                keywords.slice(0, 5).forEach(k => {
+                    const span = document.createElement('span');
+                    span.className = "text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded-md text-slate-300 cursor-pointer transition-colors";
+                    span.textContent = `#${k.name}`;
+                    span.onclick = () => {
+                         // Search by Keyword? For simplicity, text search
+                         playSound('click');
+                         document.getElementById('searchInput').value = k.name;
+                         handleSearch({target: {value: k.name}});
+                         // Go to search view
+                         document.getElementById('resultView').classList.add('hidden');
+                         document.getElementById('searchResults').classList.remove('hidden');
+                    };
+                    kwContainer.appendChild(span);
+                });
 
-                // Background
+                
+                // Collection Logic
+                const colArea = document.getElementById('collectionArea');
+                if(item.belongs_to_collection) {
+                    colArea.classList.remove('hidden');
+                    document.getElementById('collectionName').textContent = "Explore: " + item.belongs_to_collection.name;
+                } else {
+                    colArea.classList.add('hidden');
+                }
+
                 if(item.poster_path) {
                     updateBackground(`${IMG_URL}${item.poster_path}`);
                     document.getElementById('mobilePosterBg').style.backgroundImage = `url('${IMG_URL}${item.poster_path}')`;
@@ -712,51 +2645,129 @@
                     document.getElementById('mobilePosterBg').style.backgroundImage = `url('${IMG_URL}${item.backdrop_path}')`;
                 }
 
-                // --- INFO LOGIC (MOVIE vs TV) ---
                 const metaChips = document.getElementById('metaChips');
                 const extraPanel = document.getElementById('extraInfoPanel');
                 metaChips.innerHTML = '';
                 extraPanel.innerHTML = '';
 
-                // Common Chip: Lang
                 metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white uppercase tracking-wider">${item.original_language || 'EN'}</div>`;
-                // Common Chip: Status
-                if(item.status) {
-                    const statusColor = item.status === 'Released' || item.status === 'Returning Series' ? 'text-green-400' : 'text-slate-400';
-                    metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium ${statusColor}">${item.status}</div>`;
+                // Status added to header separately now
+
+                let studioLogo = '';
+                let studioName = '-';
+                let studioId = null;
+                let studioType = '';
+                
+                if (currentMode === 'movie' && item.production_companies?.length > 0) {
+                    const pc = item.production_companies[0];
+                    studioName = pc.name;
+                    studioId = pc.id;
+                    studioType = 'production_companies';
+                    if(pc.logo_path) {
+                        // Monochrome style as requested
+                        studioLogo = `<img src="${IMG_URL}${pc.logo_path}" class="h-6 md:h-8 w-auto object-contain brightness-0 invert opacity-70 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all" alt="${studioName}" title="${studioName}">`;
+                    }
+                } 
+                else if (currentMode === 'tv' && item.networks?.length > 0) {
+                    const net = item.networks[0];
+                    studioName = net.name;
+                    studioId = net.id;
+                    studioType = 'networks';
+                    if(net.logo_path) {
+                        // Monochrome style as requested
+                        studioLogo = `<img src="${IMG_URL}${net.logo_path}" class="h-6 md:h-8 w-auto object-contain brightness-0 invert opacity-70 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all" alt="${studioName}" title="${studioName}">`;
+                    }
+                }
+                
+                // Make Studio Clickable
+                let studioDisplay = studioLogo || `<span class="text-white font-medium truncate block">${studioName}</span>`;
+                if(studioId) {
+                    studioDisplay = `<div class="cursor-pointer inline-block" onclick="fetchCompanyContent(${studioId}, '${studioName}', '${studioType}')">${studioDisplay}</div>`;
                 }
 
+                // Director / Creator Logic
+                let creatorLabel = "Director";
+                let creatorName = "-";
+                let directorsList = [];
+                
                 if(currentMode === 'movie') {
-                    // Movie Runtime
+                    // Filter ALL directors
+                    directorsList = item.credits?.crew?.filter(c => c.job === 'Director') || [];
+                    if(directorsList.length > 0) {
+                        creatorName = directorsList.map(d => d.name).join(', ');
+                    }
+                    
                     if(item.runtime) {
                         const h = Math.floor(item.runtime / 60);
                         const m = item.runtime % 60;
                         const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
                         metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${timeStr}</div>`;
                     }
-                    // Movie Extra Info
                     extraPanel.innerHTML = `
-                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Budget</span><span class="text-white font-medium">${item.budget > 0 ? '$'+(item.budget/1000000).toFixed(1)+'M' : '-'}</span></div>
-                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Revenue</span><span class="text-white font-medium">${item.revenue > 0 ? '$'+(item.revenue/1000000).toFixed(1)+'M' : '-'}</span></div>
-                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Production</span><span class="text-white font-medium truncate block">${item.production_companies?.[0]?.name || '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Budget</span><span class="text-white font-medium">${item.budget > 0 ? formatMoney(item.budget) : '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Revenue</span><span class="text-white font-medium">${item.revenue > 0 ? formatMoney(item.revenue) : '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">${creatorLabel}</span><span class="text-white font-medium truncate block" title="${creatorName}">${creatorName}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Studio</span><div class="mt-1">${studioDisplay}</div></div>
                     `;
                 } else {
-                    // TV Info
+                    creatorLabel = "Creator";
+                    if(item.created_by && item.created_by.length > 0) {
+                        directorsList = item.created_by; // Treat creators as directors for UI
+                        creatorName = item.created_by.map(c => c.name).join(', ');
+                    }
+                    
                     if(item.number_of_seasons) {
                         metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i> ${item.number_of_seasons} Seasons</div>`;
+                        
+                        // BINGE TIME CALCULATOR (Cool Feature)
+                        if(item.episode_run_time && item.episode_run_time.length > 0 && item.number_of_episodes) {
+                            const avgRuntime = item.episode_run_time[0]; // Average runtime
+                            const totalMinutes = avgRuntime * item.number_of_episodes;
+                            const bingeHours = Math.floor(totalMinutes / 60);
+                            const bingeDays = Math.floor(bingeHours / 24);
+                            const remainingHours = bingeHours % 24;
+                            let bingeStr = `${bingeHours} hrs`;
+                            if(bingeDays > 0) bingeStr = `${bingeDays}d ${remainingHours}h`;
+                             metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-purple-300 flex items-center gap-1" title="Estimated Binge Time"><i data-lucide="hourglass" class="w-3 h-3"></i> ${bingeStr}</div>`;
+                        }
                     }
                     if(item.number_of_episodes) {
                         metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="film" class="w-3 h-3"></i> ${item.number_of_episodes} Eps</div>`;
                     }
-                    // TV Extra Info
                     extraPanel.innerHTML = `
-                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">First Air</span><span class="text-white font-medium">${item.first_air_date || '-'}</span></div>
-                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Last Air</span><span class="text-white font-medium">${item.last_air_date || '-'}</span></div>
-                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Network</span><span class="text-white font-medium truncate block">${item.networks?.[0]?.name || '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">First Air</span><span class="text-white font-medium">${formatDate(item.first_air_date)}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Last Air</span><span class="text-white font-medium">${formatDate(item.last_air_date)}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">${creatorLabel}</span><span class="text-white font-medium truncate block" title="${creatorName}">${creatorName}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase text-[10px] mb-0.5">Network</span><div class="mt-1">${studioDisplay}</div></div>
                     `;
                 }
+                
+                // Show Director Cards (Loop through all directors)
+                const directorArea = document.getElementById('directorArea');
+                const directorListEl = document.getElementById('directorList'); // Renamed ID in HTML
+                directorListEl.innerHTML = '';
+                
+                if(directorsList.length > 0) {
+                    directorArea.classList.remove('hidden');
+                    directorsList.forEach(d => {
+                        const div = document.createElement('div');
+                        const img = d.profile_path ? `${PROFILE_URL}${d.profile_path}` : 'https://via.placeholder.com/50x50?text=?';
+                        div.className = "flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/5 hover:bg-white/10 cursor-pointer transition-colors group min-w-[200px]";
+                        div.innerHTML = `
+                            <img src="${img}" class="w-12 h-12 rounded-full object-cover border border-white/10">
+                            <div>
+                                <span class="block text-sm font-bold text-white group-hover:text-brand transition-colors">${d.name}</span>
+                                <span class="text-xs text-slate-500">View Filmography</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 ml-auto group-hover:translate-x-1 transition-transform"></i>
+                        `;
+                        div.onclick = () => fetchPersonCredits(d.id, d.name, 'crew');
+                        directorListEl.appendChild(div);
+                    });
+                } else {
+                    directorArea.classList.add('hidden');
+                }
 
-                // Poster
                 const posterArea = document.getElementById('posterArea');
                 if(item.poster_path) {
                     posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover shadow-2xl rounded-xl">`;
@@ -764,7 +2775,6 @@
                     posterArea.innerHTML = `<div class="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
                 }
 
-                // Trailer
                 const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer' && v.official) || item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
                 const inlineTrailer = document.getElementById('inlineTrailer');
                 const toggleBtn = document.getElementById('toggleTrailerBtn');
@@ -776,9 +2786,8 @@
                 if(trailer) {
                     toggleBtn.parentElement.classList.remove('hidden');
                     const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=0&controls=1&rel=0`;
-                    // Delay loading iframe until user clicks expand for better performance? 
-                    // For now, load on click.
                     toggleBtn.onclick = () => {
+                         playSound('click');
                          if(!isTrailerExpanded) {
                              inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
                          }
@@ -789,51 +2798,132 @@
                     inlineTrailer.innerHTML = '';
                 }
 
-                // Providers
-                const provs = item['watch/providers']?.results?.['IN'] || item['watch/providers']?.results?.['US'];
+                const provs = item['watch/providers']?.results?.[settings.region] || item['watch/providers']?.results?.['US'];
                 const provArea = document.getElementById('providersArea');
-                const provList = document.getElementById('providerIcons');
-                provList.innerHTML = '';
+                const provListStream = document.getElementById('providerIconsStream');
+                const provListRent = document.getElementById('providerIconsRent');
+                const rentSection = document.getElementById('providerRentSection');
                 
-                if(provs && (provs.flatrate || provs.buy || provs.rent)) {
-                    provArea.classList.remove('hidden');
-                    const methods = [...(provs.flatrate||[]), ...(provs.buy||[]), ...(provs.rent||[])];
-                    const unique = new Map();
-                    methods.forEach(p => unique.set(p.provider_id, p));
+                document.getElementById('regionLabel').textContent = settings.region === 'IN' ? '(India)' : `(${settings.region})`;
+                provListStream.innerHTML = '';
+                provListRent.innerHTML = '';
+                
+                let hasStream = false;
+                let hasRent = false;
+
+                if(provs) {
+                    // Flatrate (Streaming)
+                    if(provs.flatrate) {
+                        provs.flatrate.forEach(p => {
+                           hasStream = true;
+                           provListStream.appendChild(createProviderIcon(p, title));
+                        });
+                    }
                     
-                    Array.from(unique.values()).slice(0, 6).forEach(p => {
-                        const a = document.createElement('a');
-                        let searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.google.com/search?q=watch ${encodeURIComponent(title)} on ${p.provider_name}`;
-                        
-                        a.href = searchUrl;
-                        a.target = "_blank";
-                        a.className = "hover:scale-105 transition-transform flex-shrink-0";
-                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-white/10" title="Watch on ${p.provider_name}" alt="${p.provider_name}">`;
-                        provList.appendChild(a);
-                    });
+                    // Rent/Buy
+                    const rentBuy = [...(provs.rent || []), ...(provs.buy || [])];
+                    const uniqueRent = new Map();
+                    rentBuy.forEach(p => uniqueRent.set(p.provider_id, p));
+                    
+                    if(uniqueRent.size > 0) {
+                        hasRent = true;
+                        rentSection.classList.remove('hidden');
+                        uniqueRent.forEach(p => {
+                            provListRent.appendChild(createProviderIcon(p, title));
+                        });
+                    } else {
+                        rentSection.classList.add('hidden');
+                    }
+                }
+                
+                if(hasStream || hasRent) {
+                    provArea.classList.remove('hidden');
                 } else {
                     provArea.classList.add('hidden');
                 }
 
-                // Cast
                 const castList = document.getElementById('castList');
                 castList.innerHTML = '';
-                (item.credits?.cast || []).slice(0, 8).forEach(c => {
+                (item.credits?.cast || []).slice(0, 15).forEach(c => { // Increased to 15 for slider
                     const div = document.createElement('div');
-                    div.className = "flex flex-col items-center min-w-[64px] gap-2 group/cast cursor-pointer";
+                    div.className = "flex flex-col items-center min-w-[72px] gap-2 group/cast cursor-pointer";
                     const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
                     
                     div.innerHTML = `
-                        <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-rose-500 transition-all shadow-md relative">
+                        <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-brand transition-all shadow-md relative">
                             <img src="${img}" class="w-full h-full object-cover">
                         </div>
-                        <span class="text-[10px] text-slate-400 font-bold text-center truncate w-full group-hover/cast:text-white transition-colors">${c.name}</span>
+                        <div class="text-center w-full px-1">
+                            <span class="text-[10px] text-slate-300 font-bold block truncate group-hover/cast:text-white transition-colors">${c.name}</span>
+                            <span class="text-[9px] text-slate-500 block truncate">${c.character || ''}</span>
+                        </div>
                     `;
-                    div.onclick = () => window.open(`https://www.google.com/search?q=${encodeURIComponent(c.name)}`, '_blank');
+                    // ACTOR CLICK HANDLER - revenue sort
+                    div.onclick = () => {
+                        fetchPersonCredits(c.id, c.name, 'cast');
+                    };
+                    div.onmouseenter = () => playSound('hover');
                     castList.appendChild(div);
                 });
+                
+                // Add "View All" button at end of cast list
+                const viewAllDiv = document.createElement('div');
+                viewAllDiv.className = "flex flex-col items-center justify-center min-w-[72px] gap-2 group/cast cursor-pointer";
+                viewAllDiv.innerHTML = `
+                    <div class="w-14 h-14 rounded-full bg-white/10 border-2 border-white/10 group-hover/cast:border-brand transition-all shadow-md flex items-center justify-center">
+                         <i data-lucide="arrow-right" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="text-[10px] text-slate-300 font-bold block">View All</span>
+                `;
+                viewAllDiv.onclick = () => {
+                    // Quick modal or grid for full cast? Let's use Grid View for "Full Cast"
+                    // reusing person credits logic but just listing this movie's cast
+                    document.getElementById('gridTitle').textContent = `Full Cast: ${title}`;
+                    const grid = document.getElementById('gridContainer');
+                    grid.innerHTML = '';
+                    
+                    item.credits?.cast?.forEach(c => {
+                        if(!c.profile_path) return;
+                        // Manual card creation for person
+                         const div = document.createElement('div');
+                         div.className = `grid-card relative rounded-xl overflow-hidden cursor-pointer shadow-lg aspect-[2/3] bg-slate-800 border border-white/5 group`;
+                         div.innerHTML = `
+                            <img src="${PROFILE_URL}${c.profile_path}" class="w-full h-full object-cover">
+                            <div class="grid-card-overlay absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent opacity-0 transition-opacity duration-300 flex flex-col justify-end p-3">
+                                <span class="text-xs font-bold text-white leading-tight mb-1">${c.name}</span>
+                                <span class="text-[10px] text-slate-300">${c.character}</span>
+                            </div>
+                        `;
+                        div.onclick = () => fetchPersonCredits(c.id, c.name, 'cast');
+                        grid.appendChild(div);
+                    });
+                    pushView('gridResultsView');
+                };
+                castList.appendChild(viewAllDiv);
 
-                // Recommendations
+                // REVIEWS
+                const reviewsArea = document.getElementById('reviewsArea');
+                const reviewsList = document.getElementById('reviewsList');
+                reviewsList.innerHTML = '';
+                const reviews = item.reviews?.results || [];
+                if(reviews.length > 0) {
+                    reviewsArea.classList.remove('hidden');
+                    reviews.slice(0, 2).forEach(r => {
+                        const div = document.createElement('div');
+                        div.className = "bg-white/5 p-4 rounded-xl border border-white/5 text-sm";
+                        div.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-bold text-white">${r.author}</span>
+                                <span class="text-xs text-brand font-bold">★ ${r.author_details.rating || '-'}</span>
+                            </div>
+                            <p class="text-slate-400 line-clamp-3 leading-relaxed">${r.content}</p>
+                        `;
+                        reviewsList.appendChild(div);
+                    });
+                } else {
+                    reviewsArea.classList.add('hidden');
+                }
+
                 const recs = item.recommendations?.results || [];
                 const recsArea = document.getElementById('recsArea');
                 const recsList = document.getElementById('recsList');
@@ -852,23 +2942,24 @@
                             </div>
                         `;
                         div.onclick = () => {
+                            playSound('click');
                             if (r.media_type) currentMode = r.media_type; 
                             loadItemDetails(r.id);
-                            // Scroll to top
                             document.getElementById('contentScrollArea').scrollTop = 0;
                             document.getElementById('detailsCol').scrollTop = 0;
                         };
+                        div.onmouseenter = () => playSound('hover');
                         recsList.appendChild(div);
                     });
                 } else {
                     recsArea.classList.add('hidden');
                 }
 
-                // Stream Button Link
                 document.getElementById('streamLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
 
-                // Switch Views
                 document.getElementById('genreSelectionView').classList.add('hidden');
+                document.getElementById('gridResultsView').classList.add('hidden'); 
+                document.getElementById('boxOfficeView').classList.add('hidden');
                 document.getElementById('resultView').classList.remove('hidden');
                 lucide.createIcons();
 
@@ -879,14 +2970,23 @@
                 showLoading(false);
             }
         }
+        
+        function createProviderIcon(p, title) {
+            const a = document.createElement('a');
+            let searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.google.com/search?q=watch ${encodeURIComponent(title)} on ${p.provider_name}`;
+            
+            a.href = searchUrl;
+            a.target = "_blank";
+            a.className = "hover:scale-105 transition-transform flex-shrink-0";
+            a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-white/10" title="${p.provider_name}" alt="${p.provider_name}">`;
+            return a;
+        }
 
-        // --- HELPERS ---
         function showLoading(show) {
             const el = document.getElementById('loadingView');
             if(show) {
                 el.classList.remove('hidden');
             } else {
-                // Fade out effect
                 el.classList.add('opacity-0');
                 setTimeout(() => {
                     el.classList.add('hidden');
@@ -903,6 +3003,7 @@
         }
 
         function shareContent() {
+            playSound('click');
             if(!currentItem) return;
             const title = currentItem.title || currentItem.name;
             const text = `Check out "${title}" on WatchNext!`;
@@ -914,29 +3015,58 @@
             }
         }
 
-        function fireConfetti() {
+        function fireConfetti(loop = false) {
             const canvas = document.getElementById('confetti');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            const particles = Array.from({length: 50}, () => ({
-                x: canvas.width/2, y: canvas.height/2,
-                vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
-                color: `hsl(${Math.random()*360}, 100%, 50%)`,
-                life: 100
-            }));
             
+            let particles = [];
+            const particleCount = 100;
+
+            function createParticle() {
+                return {
+                    x: canvas.width / 2, 
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 20, 
+                    vy: (Math.random() - 0.5) * 20,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 100 + Math.random() * 50
+                };
+            }
+
+            for(let i=0; i<particleCount; i++) particles.push(createParticle());
+            
+            let animationFrameId;
+
             function animate() {
-                ctx.clearRect(0,0,canvas.width,canvas.height);
+                // If loop is requested but party mode was removed, stop immediately
+                if(loop && !document.body.classList.contains('party-mode')) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 let active = false;
-                particles.forEach(p => {
+                
+                particles.forEach((p, index) => {
                     if(p.life > 0) {
-                        p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life--;
-                        ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,5,5);
-                        active=true;
+                        p.x += p.vx; 
+                        p.y += p.vy; 
+                        p.vy += 0.5; // Gravity
+                        p.life--;
+                        ctx.fillStyle = p.color; 
+                        ctx.fillRect(p.x, p.y, 6, 6);
+                        active = true;
+                    } else if (loop) {
+                         particles[index] = createParticle();
+                         active = true;
                     }
                 });
-                if(active) requestAnimationFrame(animate);
+                
+                if(active || loop) {
+                    animationFrameId = requestAnimationFrame(animate);
+                }
             }
             animate();
         }
@@ -945,4 +3075,3 @@
     </script>
 </body>
 </html>
-
