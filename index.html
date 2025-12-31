@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WatchNext: Movie & TV Picker</title>
+    <title>WatchNext: Ultimate Picker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -44,8 +44,9 @@
             z-index: -1;
             background-size: cover;
             background-position: center;
-            filter: blur(20px) brightness(0.25);
+            filter: blur(25px) brightness(0.2);
             transition: background-image 1s ease-in-out;
+            transform: scale(1.1); /* Prevent blur edges */
         }
         #dynamic-bg-overlay {
             position: fixed;
@@ -54,7 +55,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: linear-gradient(to bottom, rgba(2,6,23,0.7), rgba(2,6,23,0.95));
+            background: linear-gradient(to bottom, rgba(2,6,23,0.6), rgba(2,6,23,0.98));
         }
 
         /* Aspect Ratio for Iframe */
@@ -65,7 +66,7 @@
             background: #000;
             border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
         .aspect-video-container iframe {
             position: absolute;
@@ -73,6 +74,21 @@
             left: 0;
             width: 100%;
             height: 100%;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Gradient Text */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(to right, #fff, #cbd5e1);
         }
     </style>
 </head>
@@ -86,11 +102,11 @@
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
 
     <!-- Header -->
-    <header class="p-4 md:p-6 border-b border-slate-800/50 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50">
+    <header class="p-4 border-b border-white/5 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50">
         <div class="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <!-- Clickable Logo (Home Button) -->
+            <!-- Clickable Logo -->
             <button id="logoBtn" class="flex items-center gap-3 group focus:outline-none">
-                <div class="p-2 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/20 group-hover:scale-110 transition-transform">
+                <div class="p-2 bg-gradient-to-br from-rose-600 to-purple-600 rounded-lg shadow-lg shadow-rose-600/20 group-hover:scale-110 transition-transform">
                     <i data-lucide="clapperboard" class="text-white w-6 h-6"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-white hidden sm:block group-hover:text-rose-100 transition-colors">
@@ -99,7 +115,7 @@
             </button>
             
             <!-- Media Type Toggle -->
-            <div class="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700/50 shadow-inner">
+            <div class="flex items-center bg-slate-950/50 p-1 rounded-xl border border-white/10 shadow-inner">
                 <button id="modeMovie" class="px-6 py-2 rounded-lg text-sm font-bold transition-all bg-rose-600 text-white shadow-lg">Movies</button>
                 <button id="modeTV" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition-all">TV Series</button>
             </div>
@@ -107,30 +123,30 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 flex flex-col items-center min-h-[70vh] justify-center relative flex-grow">
+    <main class="container mx-auto px-4 py-6 flex flex-col items-center min-h-[85vh] justify-center relative flex-grow">
         
         <!-- Error Notification -->
-        <div id="errorToast" class="hidden absolute top-0 bg-red-500/10 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl items-center gap-3 mb-8 animate-fade-in max-w-lg z-40 backdrop-blur-md">
+        <div id="errorToast" class="hidden absolute top-4 bg-red-500/10 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl items-center gap-3 mb-8 animate-fade-in max-w-lg z-[100] backdrop-blur-md shadow-xl">
             <i data-lucide="alert-circle" class="flex-shrink-0"></i>
             <p id="errorText">Error message here</p>
             <button onclick="document.getElementById('errorToast').classList.add('hidden')" class="ml-auto hover:text-white">✕</button>
         </div>
 
         <!-- VIEW 1: Filters & Genre Selection -->
-        <div id="genreSelectionView" class="w-full max-w-5xl animate-fade-in flex flex-col items-center">
+        <div id="genreSelectionView" class="w-full max-w-6xl animate-fade-in flex flex-col items-center">
             
-            <div class="text-center mb-8 space-y-3">
-                <h2 class="text-3xl md:text-5xl font-bold text-white">Find your next obsession.</h2>
-                <p id="modeDescription" class="text-slate-400 text-lg">Browsing Movies</p>
+            <div class="text-center mb-8 space-y-2">
+                <h2 class="text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl">Find your next <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-purple-500">obsession</span>.</h2>
+                <p id="modeDescription" class="text-slate-400 text-lg font-medium">Browsing Movies</p>
             </div>
 
             <!-- Advanced Filters -->
-            <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 max-w-4xl bg-slate-900/60 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm shadow-xl">
+            <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 max-w-5xl glass-panel p-5 rounded-2xl shadow-2xl">
                 <!-- Decade Filter -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Era</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Era</label>
                     <div class="relative">
-                        <select id="decadeFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                        <select id="decadeFilter" class="w-full bg-slate-950/50 border border-white/10 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-800">
                             <option value="">Any Time</option>
                             <option value="2024">New (2024-25)</option>
                             <option value="2020">2020s</option>
@@ -139,15 +155,15 @@
                             <option value="1990">90s Classics</option>
                             <option value="1980">80s Retro</option>
                         </select>
-                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-500 pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- Language Filter -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Language</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Language</label>
                     <div class="relative">
-                        <select id="languageFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                        <select id="languageFilter" class="w-full bg-slate-950/50 border border-white/10 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-800">
                             <option value="en">English</option>
                             <option value="hi">Hindi</option>
                             <option value="kn">Kannada</option>
@@ -158,40 +174,40 @@
                             <option value="ja">Japanese</option>
                             <option value="">All</option>
                         </select>
-                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-500 pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- Rating Filter -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Quality</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quality</label>
                     <div class="relative">
-                        <select id="ratingFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                        <select id="ratingFilter" class="w-full bg-slate-950/50 border border-white/10 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-800">
                             <option value="7">Good (7+)</option>
                             <option value="8">Great (8+)</option>
                             <option value="5">Any</option>
                         </select>
-                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-500 pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- Sort Filter -->
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Sort By</label>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sort By</label>
                     <div class="relative">
-                        <select id="sortFilter" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-750">
+                        <select id="sortFilter" class="w-full bg-slate-950/50 border border-white/10 text-white rounded-lg p-2.5 text-sm appearance-none focus:ring-2 focus:ring-rose-500 outline-none transition-all cursor-pointer hover:bg-slate-800">
                             <option value="popularity.desc">Popularity</option>
                             <option value="vote_average.desc">Top Rated</option>
                             <option value="revenue.desc">Box Office</option>
                         </select>
-                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-3 w-4 h-4 text-slate-500 pointer-events-none"></i>
                     </div>
                 </div>
             </div>
 
             <!-- Surprise Me Button -->
-            <button id="surpriseBtn" class="mb-10 px-8 py-3 bg-gradient-to-r from-purple-600 to-rose-600 rounded-full font-bold text-white shadow-lg hover:shadow-purple-500/30 hover:scale-105 transition-all flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-5 h-5"></i> Surprise Me!
+            <button id="surpriseBtn" class="mb-10 px-10 py-4 bg-gradient-to-r from-purple-600 via-rose-600 to-orange-600 rounded-full font-bold text-white shadow-[0_0_20px_rgba(225,29,72,0.5)] hover:shadow-[0_0_30px_rgba(225,29,72,0.7)] hover:scale-105 transition-all flex items-center gap-3 text-lg border border-white/20">
+                <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i> Surprise Me!
             </button>
 
             <!-- Genre Grid -->
@@ -201,7 +217,7 @@
         </div>
 
         <!-- VIEW 2: Loading -->
-        <div id="loadingView" class="hidden text-center space-y-8">
+        <div id="loadingView" class="hidden text-center space-y-8 absolute inset-0 flex flex-col items-center justify-center z-50 bg-slate-950/80 backdrop-blur-xl">
             <div class="relative w-32 h-32 mx-auto">
                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
                <div class="absolute inset-0 rounded-full border-t-4 border-rose-600 animate-spin"></div>
@@ -209,121 +225,162 @@
                  <i data-lucide="loader-2" class="text-rose-500 w-12 h-12 animate-spin-slow"></i>
                </div>
             </div>
-            <h3 id="loadingText" class="text-2xl font-medium text-slate-300">Searching...</h3>
-            <p id="loadingSubtext" class="text-slate-500">Scanning databases...</p>
+            <div class="space-y-2">
+                <h3 id="loadingText" class="text-3xl font-bold text-white tracking-tight">Searching...</h3>
+                <p id="loadingSubtext" class="text-slate-400">Scanning databases...</p>
+            </div>
         </div>
 
         <!-- VIEW 3: Result -->
-        <div id="resultView" class="hidden w-full flex flex-col items-center space-y-6 max-w-6xl pb-12">
-            <div class="text-center space-y-2">
-                <p id="resultGenreLabel" class="text-slate-400 uppercase tracking-widest text-xs font-bold shadow-black drop-shadow-md">Your Pick</p>
-                <h2 class="text-3xl md:text-4xl font-black text-white drop-shadow-lg">Watch this now!</h2>
-            </div>
+        <div id="resultView" class="hidden w-full h-full flex flex-col items-center justify-center pb-0">
             
             <!-- Main Content Area -->
-            <div id="swipeCard" class="flex flex-col md:flex-row bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 animate-fade-in-up w-full relative group min-h-[500px]">
+            <!-- Layout Change: Increased width, limited height to viewport minus margins -->
+            <div id="swipeCard" class="glass-panel rounded-3xl overflow-hidden shadow-2xl animate-fade-in-up w-full max-w-7xl relative group flex flex-col md:flex-row h-auto md:h-[80vh] min-h-[500px]">
                 
                 <!-- Like Animation Overlay -->
-                <div id="likeAnimation" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50 opacity-0">
-                    <i data-lucide="heart" class="w-48 h-48 text-rose-500 fill-rose-500 drop-shadow-2xl"></i>
+                <div id="likeAnimation" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50 opacity-0 bg-black/40 backdrop-blur-sm transition-opacity">
+                    <i data-lucide="heart" class="w-48 h-48 text-rose-500 fill-rose-500 drop-shadow-[0_0_30px_rgba(225,29,72,0.8)]"></i>
                 </div>
 
-                <!-- POSTER SECTION (Permanent Left Side) -->
-                <div class="w-full md:w-2/5 lg:w-5/12 relative bg-slate-950 flex-shrink-0">
+                <!-- POSTER SECTION (Left Side) -->
+                <!-- Layout Change: Reduced width percentage for poster to give more room for content -->
+                <div class="w-full md:w-1/3 lg:w-[35%] relative bg-black flex-shrink-0 h-48 md:h-full overflow-hidden">
                     <div id="mediaContainer" class="w-full h-full relative">
                         <!-- Poster injected here -->
                     </div>
+                    <!-- Mobile Overlay Gradient -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:hidden"></div>
                 </div>
 
                 <!-- DETAILS SECTION (Right Side) -->
-                <div class="w-full md:w-3/5 lg:w-7/12 p-6 md:p-8 flex flex-col gap-6 relative max-h-[850px] overflow-y-auto no-scrollbar">
+                <div class="w-full md:w-2/3 lg:w-[65%] p-6 md:p-8 flex flex-col gap-5 relative overflow-y-auto custom-scroll h-full bg-gradient-to-br from-slate-900/90 to-slate-950/90">
                     
-                    <!-- Header Info -->
-                    <div>
-                        <h2 id="movieTitle" class="text-2xl md:text-4xl font-bold text-white leading-tight mb-2">Title</h2>
-                        <p id="movieTagline" class="text-rose-400 text-sm font-medium italic mb-3 opacity-90"></p>
-                        
-                        <div class="flex flex-wrap items-center gap-3">
-                            <div class="bg-yellow-500 text-black px-3 py-1 rounded-full font-bold flex items-center gap-1 text-sm shadow-lg shadow-yellow-500/20">
-                                <i data-lucide="star" class="w-4 h-4 fill-current"></i> <span id="movieRating">0.0</span>
+                    <!-- Top Bar: Genres & Tagline -->
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 text-xs font-bold tracking-widest text-rose-400 uppercase">
+                                <span id="resultGenreLabel">GENRE</span>
                             </div>
-                            <span class="text-slate-400 text-sm px-2 border-r border-slate-700" id="movieYear">0000</span>
-                            <span class="text-slate-400 text-sm px-2 border-r border-slate-700 uppercase" id="movieLang">EN</span>
-                            <span class="text-slate-400 text-sm px-2" id="movieOrigin">Origin</span>
+                            <h2 id="movieTitle" class="text-3xl md:text-5xl font-black text-white leading-tight drop-shadow-lg">Title</h2>
+                            <p id="movieTagline" class="text-slate-400 text-sm md:text-base font-medium italic opacity-80 pl-1 border-l-2 border-rose-500/50"></p>
+                        </div>
+                        <!-- Score Badge -->
+                        <div class="hidden md:flex flex-col items-center bg-white/5 p-3 rounded-xl border border-white/10 backdrop-blur-md">
+                            <span id="movieRating" class="text-2xl font-black text-white">0.0</span>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Rating</span>
                         </div>
                     </div>
 
-                    <!-- Plot -->
-                    <p id="moviePlot" class="text-slate-300 text-base leading-relaxed font-light">
-                        Plot summary...
-                    </p>
-                    
-                    <!-- TRAILER EMBED (New: Embedded in Details) -->
-                    <div id="trailerSection" class="hidden w-full">
-                        <div class="aspect-video-container bg-black rounded-xl overflow-hidden shadow-lg border border-slate-800">
+                    <!-- Meta Data Row -->
+                    <div class="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-300">
+                        <span class="bg-white/10 px-2.5 py-1 rounded-md text-white" id="movieYear">0000</span>
+                        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> <span id="movieRuntime">0m</span></span>
+                        <span class="uppercase border border-white/20 px-1.5 rounded text-[10px]" id="movieLang">EN</span>
+                        <span class="text-slate-400" id="movieOrigin">Origin</span>
+                        <span class="text-green-400 flex items-center gap-1 ml-auto" id="movieStatus"><i data-lucide="check-circle" class="w-3 h-3"></i> Released</span>
+                    </div>
+
+                    <!-- TRAILER EMBED -->
+                    <div id="trailerSection" class="w-full hidden">
+                        <div class="aspect-video-container">
                              <!-- Iframe injected here -->
                         </div>
                     </div>
 
-                    <!-- Providers Section (Interactive) -->
-                    <div id="providersSection" class="hidden">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Where to Watch</h4>
-                        <div id="providerIcons" class="flex flex-wrap gap-3">
-                            <!-- Clickable Icons injected here -->
-                        </div>
-                        <div class="mt-2 text-[10px] text-slate-600 italic">Streaming data via JustWatch</div>
-                    </div>
-
-                    <!-- Cast (Interactive) -->
-                    <div>
-                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Starring</h4>
-                        <div id="movieCast" class="flex flex-wrap gap-4">
-                            <!-- Cast with images injected here -->
+                    <!-- Plot -->
+                    <div class="space-y-2">
+                        <p id="moviePlot" class="text-slate-300 text-sm md:text-base leading-relaxed font-light">
+                            Plot summary...
+                        </p>
+                        <!-- Keywords -->
+                        <div id="keywordsContainer" class="flex flex-wrap gap-2 mt-2">
+                            <!-- Keywords injected here -->
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="grid grid-cols-3 gap-3 mt-auto pt-6 border-t border-slate-800 sticky bottom-0 bg-slate-900/95 backdrop-blur-sm pb-2 z-10">
-                        <a id="watchLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-bold transition-all text-sm shadow-lg shadow-yellow-500/10">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+                        <!-- Cast -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Starring</h4>
+                            <div id="movieCast" class="flex gap-3 overflow-x-auto pb-2 no-scrollbar mask-gradient-right">
+                                <!-- Cast injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Providers -->
+                        <div id="providersSection" class="hidden space-y-2">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Stream Now</h4>
+                            <div id="providerIcons" class="flex flex-wrap gap-3">
+                                <!-- Icons injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations (New Feature) -->
+                    <div id="recommendationsSection" class="hidden space-y-2 mt-2">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="thumbs-up" class="w-3 h-3"></i> You Might Also Like
+                        </h4>
+                        <div id="recommendationsList" class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                            <!-- Recs injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Sticky Bottom Action Bar -->
+                    <div class="mt-auto pt-4 flex gap-3 sticky bottom-0 bg-slate-900/95 backdrop-blur-md pb-1 z-20 border-t border-white/5">
+                        <button id="resetBtn" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 border border-white/5 hover:border-rose-500/30">
+                            <i data-lucide="x" class="w-4 h-4"></i> Reject
+                        </button>
+                        <a id="watchLink" href="#" target="_blank" class="flex-1 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black rounded-xl font-bold transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
                             <i data-lucide="tv" class="w-4 h-4"></i> Stream
                         </a>
-                        <button id="shareBtn" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-medium transition-all text-sm">
+                        <button id="shareBtn" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2">
                             <i data-lucide="share-2" class="w-4 h-4"></i> Share
                         </button>
-                        <a id="tmdbLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-medium transition-all text-sm">
-                            <i data-lucide="info" class="w-4 h-4"></i> Info
-                        </a>
                     </div>
                 </div>
             </div>
 
             <!-- Mobile Swipe Hint -->
-            <div class="flex items-center justify-between w-full max-w-sm text-slate-500 text-sm md:hidden animate-pulse px-4">
-                <span class="flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Reject</span>
-                <span class="flex items-center gap-1">Like <i data-lucide="arrow-right" class="w-4 h-4"></i></span>
+            <div class="flex items-center justify-center gap-6 w-full max-w-sm text-slate-500 text-sm md:hidden animate-pulse mt-4">
+                <span class="flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Swipe Left to Reject</span>
+                <span class="flex items-center gap-1">Swipe Right to Like <i data-lucide="arrow-right" class="w-4 h-4"></i></span>
             </div>
-
-            <button id="resetBtn" class="bg-slate-800/80 hover:bg-rose-600 text-white px-8 py-3 rounded-full font-bold transition-all flex items-center gap-2 backdrop-blur-md shadow-lg hover:shadow-rose-600/20 border border-slate-700 hover:border-transparent">
-                <i data-lucide="refresh-cw" class="w-5 h-5"></i> Pick Another
-            </button>
         </div>
 
     </main>
 
-    <footer class="p-8 text-center border-t border-slate-800/50 bg-slate-900/60 backdrop-blur-md mt-auto">
-        <p class="text-slate-500 font-medium">Arnav Dugad © 2025</p>
-        <p class="text-xs text-slate-600 mt-2">Data provided by TMDB.</p>
+    <footer class="p-6 text-center border-t border-slate-800/50 bg-slate-900/60 backdrop-blur-md mt-auto">
+        <p class="text-slate-500 font-medium text-sm">Arnav Dugad © 2025</p>
+        <p class="text-[10px] text-slate-600 mt-1">Data provided by TMDB.</p>
     </footer>
 
     <script>
         // --- CONSTANTS & CONFIG ---
         const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
-        const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w1280"; 
+        const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original"; 
         const TMDB_POSTER_BASE_URL = "https://image.tmdb.org/t/p/w780";
         const TMDB_PROFILE_BASE_URL = "https://image.tmdb.org/t/p/w185";
+        const TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w300";
         const API_KEY = "2b834d5234781ad70bd646922e9ddd18";
 
-        // Sound Effect
+        // Streaming Search URL Mappings
+        const STREAMING_SEARCH_URLS = {
+            'Netflix': 'https://www.netflix.com/search?q=',
+            'Amazon Prime Video': 'https://www.primevideo.com/search/ref=atv_nb_sr?phrase=',
+            'Disney Plus': 'https://www.disneyplus.com/search?q=',
+            'Hotstar': 'https://www.hotstar.com/in/explore?q=',
+            'Hulu': 'https://www.hulu.com/search?q=',
+            'HBO Max': 'https://play.hbomax.com/search?q=',
+            'Apple TV': 'https://tv.apple.com/search?term=',
+            'YouTube': 'https://www.youtube.com/results?search_query=',
+            'Google Play Movies': 'https://play.google.com/store/search?c=movies&q=',
+            'JioCinema': 'https://www.jiocinema.com/search/',
+            'Zee5': 'https://www.zee5.com/search?q=',
+            'SonyLIV': 'https://www.sonyliv.com/search/'
+        };
+
         const popSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
 
         const MOVIE_GENRES = {
@@ -370,7 +427,6 @@
             renderGenreButtons();
             lucide.createIcons();
             
-            // Event Listeners
             document.getElementById('resetBtn').addEventListener('click', resetApp);
             document.getElementById('logoBtn').addEventListener('click', resetApp);
             document.getElementById('shareBtn').addEventListener('click', shareContent);
@@ -381,8 +437,8 @@
 
             setupSwipeGestures();
             
-            // Initial animation of bg
-            dynamicBg.style.backgroundImage = 'url("https://image.tmdb.org/t/p/w1280/1E5baAaEse26fej7uHcjOgEE2t2.jpg")';
+            // Initial animation
+            dynamicBg.style.backgroundImage = 'url("https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg")';
         }
 
         function setMode(mode) {
@@ -407,8 +463,8 @@
         function resetApp() {
             switchView('selection');
             selectedGenre = null;
-            document.getElementById('mediaContainer').innerHTML = ''; // Clear poster
-            document.querySelector('#trailerSection .aspect-video-container').innerHTML = ''; // Stop video
+            document.getElementById('mediaContainer').innerHTML = ''; 
+            document.querySelector('#trailerSection .aspect-video-container').innerHTML = ''; 
             dynamicBg.style.backgroundImage = 'none';
         }
 
@@ -420,7 +476,7 @@
 
             Object.keys(GENRES).forEach(genre => {
                 const btn = document.createElement('button');
-                btn.className = "relative overflow-hidden group p-4 h-28 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-2 shadow-lg bg-slate-800 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:border-rose-500/50 hover:shadow-rose-500/20";
+                btn.className = "relative overflow-hidden group p-4 h-28 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-2 shadow-lg bg-slate-900/60 border border-white/10 text-slate-200 hover:bg-slate-800 hover:border-rose-500/50 hover:shadow-rose-500/20";
                 
                 let iconHtml = '';
                 if (genre.includes('Horror')) iconHtml = '<div class="text-3xl z-10 mb-1 filter drop-shadow-lg">👻</div>';
@@ -449,7 +505,7 @@
         }
 
         function surpriseMe() {
-            popSound.play().catch(e => console.log('Audio blocked'));
+            popSound.play().catch(e => {});
             fireConfetti();
             const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
             const keys = Object.keys(GENRES);
@@ -466,10 +522,10 @@
             switchView('loading');
             document.getElementById('errorToast').classList.add('hidden');
 
-            const loadingPhrases = ["Scanning database...", "Checking popularity...", "Finding best trailers...", "Loading visuals..."];
+            const loadingPhrases = ["Consulting the oracle...", "Scanning global databases...", "Analyzing critic scores...", "Picking the perfect visual..."];
             let i = 0;
             const loadingTextEl = document.getElementById('loadingText');
-            document.getElementById('loadingSubtext').textContent = currentMode === 'movie' ? 'Searching Movies...' : 'Searching TV Series...';
+            document.getElementById('loadingSubtext').textContent = currentMode === 'movie' ? 'Curating Movies...' : 'Curating TV Series...';
             
             const textInterval = setInterval(() => {
                 loadingTextEl.textContent = loadingPhrases[i % loadingPhrases.length];
@@ -522,7 +578,7 @@
             }
 
             const randomPage = Math.floor(Math.random() * 10) + 1;
-            const url = `${TMDB_API_BASE_URL}/${endpoint}?api_key=${API_KEY}&vote_count.gte=50&page=${randomPage}&include_adult=false${params}`;
+            const url = `${TMDB_API_BASE_URL}/${endpoint}?api_key=${API_KEY}&vote_count.gte=100&page=${randomPage}&include_adult=false${params}`;
             
             const response = await fetch(url);
             const data = await response.json();
@@ -535,7 +591,8 @@
 
         async function getContentDetails(id) {
             const endpoint = currentMode === 'movie' ? 'movie' : 'tv';
-            const url = `${TMDB_API_BASE_URL}/${endpoint}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers`;
+            // Added keywords, recommendations
+            const url = `${TMDB_API_BASE_URL}/${endpoint}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers,keywords,recommendations`;
             const response = await fetch(url);
             return await response.json();
         }
@@ -545,6 +602,7 @@
             const date = item.release_date || item.first_air_date;
             const year = date ? date.split('-')[0] : 'N/A';
             const origin = item.origin_country ? item.origin_country[0] : (item.original_language || 'EN').toUpperCase();
+            const runtime = item.runtime || (item.episode_run_time ? item.episode_run_time[0] : null);
             
             document.getElementById('resultGenreLabel').textContent = `${currentMode === 'movie' ? 'Movie' : 'TV Series'} • ${selectedGenre}`;
             document.getElementById('movieTitle').textContent = title;
@@ -552,12 +610,25 @@
             document.getElementById('movieRating').textContent = item.vote_average.toFixed(1);
             document.getElementById('movieYear').textContent = year;
             document.getElementById('movieLang').textContent = item.original_language.toUpperCase();
-            document.getElementById('movieOrigin').textContent = origin;
+            document.getElementById('movieOrigin').textContent = origin || 'INTL';
+            document.getElementById('movieStatus').innerHTML = item.status === 'Released' || item.status === 'Returning Series' || item.status === 'Ended' ? `<i data-lucide="check-circle" class="w-3 h-3"></i> Available` : `<i data-lucide="clock" class="w-3 h-3"></i> Coming Soon`;
+            
+            document.getElementById('movieRuntime').textContent = runtime ? `${runtime}m` : 'N/A';
             document.getElementById('moviePlot').textContent = item.overview || "No description available.";
+
+            // --- KEYWORDS ---
+            const keywordsContainer = document.getElementById('keywordsContainer');
+            keywordsContainer.innerHTML = '';
+            const keywords = item.keywords?.keywords || item.keywords?.results || [];
+            keywords.slice(0, 5).forEach(kw => {
+                const span = document.createElement('span');
+                span.className = "text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-400";
+                span.textContent = kw.name;
+                keywordsContainer.appendChild(span);
+            });
 
             // --- MEDIA VISUALS ---
             const mediaContainer = document.getElementById('mediaContainer');
-            // Background
             if (item.poster_path) {
                 dynamicBg.style.backgroundImage = `url('${TMDB_IMAGE_BASE_URL}${item.poster_path}')`;
                 mediaContainer.innerHTML = `<img src="${TMDB_POSTER_BASE_URL}${item.poster_path}" alt="${title}" class="w-full h-full object-cover">`;
@@ -586,17 +657,16 @@
                 trailerContainer.innerHTML = '';
             }
 
-            // --- PROVIDERS (Interactive) ---
+            // --- PROVIDERS (Deep Search Links) ---
             const providersSection = document.getElementById('providersSection');
             const providerIcons = document.getElementById('providerIcons');
             providerIcons.innerHTML = '';
             
             const providers = item['watch/providers']?.results;
-            const locale = providers?.['IN'] || providers?.['US'];
+            const locale = providers?.['IN'] || providers?.['US']; // Prioritize India, fallback US
             
             if (locale && (locale.flatrate || locale.buy || locale.rent)) {
                 providersSection.classList.remove('hidden');
-                const link = locale.link; // TMDB Attribution Link
                 
                 const uniqueProviders = new Map();
                 ['flatrate', 'rent', 'buy'].forEach(type => {
@@ -609,14 +679,22 @@
                     }
                 });
 
-                Array.from(uniqueProviders.values()).slice(0, 5).forEach(p => {
+                Array.from(uniqueProviders.values()).slice(0, 6).forEach(p => {
                     const a = document.createElement('a');
-                    a.href = link;
-                    a.target = "_blank";
-                    a.className = "transform hover:scale-110 transition-transform";
                     
+                    // Generate Deep Search Link
+                    let searchUrl = STREAMING_SEARCH_URLS[p.provider_name];
+                    if (searchUrl) {
+                        a.href = `${searchUrl}${encodeURIComponent(title)}`;
+                    } else {
+                        // Fallback to JustWatch/Google if unknown provider
+                        a.href = `https://www.google.com/search?q=watch ${encodeURIComponent(title)} on ${p.provider_name}`;
+                    }
+
+                    a.target = "_blank";
+                    a.className = "transform hover:scale-110 transition-transform cursor-pointer block";
                     a.innerHTML = `
-                        <img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-slate-700/50" title="Watch on ${p.provider_name}">
+                        <img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-white/10" title="Search on ${p.provider_name}">
                     `;
                     providerIcons.appendChild(a);
                 });
@@ -624,34 +702,65 @@
                 providersSection.classList.add('hidden');
             }
 
-            // --- CAST (Interactive) ---
+            // --- CAST ---
             const castContainer = document.getElementById('movieCast');
             castContainer.innerHTML = '';
-            const topCast = item.credits?.cast?.slice(0, 6) || [];
+            const topCast = item.credits?.cast?.slice(0, 8) || [];
             
             topCast.forEach(actor => {
                 const a = document.createElement('a');
                 a.href = `https://www.google.com/search?q=${encodeURIComponent(actor.name + " actor")}`;
                 a.target = "_blank";
-                a.className = "flex flex-col items-center gap-1 w-16 text-center group/actor";
+                a.className = "flex flex-col items-center gap-2 min-w-[64px] text-center group/actor";
                 
                 const imgUrl = actor.profile_path 
                     ? `${TMDB_PROFILE_BASE_URL}${actor.profile_path}`
                     : 'https://via.placeholder.com/150/334155/FFFFFF?text=?'; 
                 
                 a.innerHTML = `
-                    <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-slate-700 shadow-md group-hover/actor:border-rose-500 transition-colors">
+                    <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 shadow-md group-hover/actor:border-rose-500 transition-colors">
                         <img src="${imgUrl}" class="w-full h-full object-cover group-hover/actor:scale-110 transition-transform duration-500">
                     </div>
-                    <span class="text-[10px] leading-tight text-slate-400 font-medium truncate w-full group-hover/actor:text-white">${actor.name}</span>
+                    <span class="text-[9px] leading-tight text-slate-400 font-bold truncate w-full group-hover/actor:text-white">${actor.name}</span>
                 `;
                 castContainer.appendChild(a);
             });
 
+            // --- RECOMMENDATIONS (New) ---
+            const recsSection = document.getElementById('recommendationsSection');
+            const recsList = document.getElementById('recommendationsList');
+            recsList.innerHTML = '';
+            
+            const recs = item.recommendations?.results || [];
+            if (recs.length > 0) {
+                recsSection.classList.remove('hidden');
+                recs.slice(0, 6).forEach(rec => {
+                     // Only show if it has a poster
+                     if (!rec.poster_path) return;
+                     
+                     const div = document.createElement('div');
+                     div.className = "relative min-w-[80px] h-[120px] rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:scale-105 transition-transform group/rec";
+                     div.innerHTML = `
+                        <img src="${TMDB_POSTER_BASE_URL}${rec.poster_path}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/rec:opacity-100 flex items-center justify-center transition-opacity">
+                            <i data-lucide="search" class="w-4 h-4 text-white"></i>
+                        </div>
+                     `;
+                     // Allow clicking a recommendation to load it (Recursive-ish)
+                     div.onclick = () => {
+                         // Simple reload with new ID logic would require refactoring state.
+                         // For now, let's link to JustWatch search for that title
+                         window.open(`https://www.justwatch.com/in/search?q=${encodeURIComponent(rec.title || rec.name)}`, '_blank');
+                     };
+                     recsList.appendChild(div);
+                });
+            } else {
+                recsSection.classList.add('hidden');
+            }
+
             // Links
             const typeParam = currentMode === 'movie' ? 'movie' : 'tv';
             document.getElementById('watchLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
-            document.getElementById('tmdbLink').href = `https://www.themoviedb.org/${typeParam}/${item.id}`;
 
             switchView('result');
         }
@@ -677,7 +786,6 @@
             document.getElementById('errorToast').classList.remove('hidden');
         }
 
-        // --- SWIPE GESTURES ---
         function setupSwipeGestures() {
             const card = document.getElementById('swipeCard');
             let touchStartX = 0;
@@ -696,14 +804,13 @@
                         heart.classList.remove('animate-heart');
                         void heart.offsetWidth;
                         heart.classList.add('animate-heart');
-                        popSound.play().catch(e => {}); // subtle sound on like
+                        popSound.play().catch(e => {}); 
                         shareContent();
                     }
                 }
             });
         }
 
-        // --- CONFETTI ---
         function fireConfetti() {
             const canvas = document.getElementById('confetti');
             const ctx = canvas.getContext('2d');
