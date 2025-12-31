@@ -2,51 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WatchNext: Ultimate Picker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Base Setup */
-        :root {
-            --header-height: 64px;
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
-        }
-
         body {
-            background-color: #020617;
+            background-color: #020617; /* Slate 950 */
             color: #e2e8f0;
-            overflow: hidden;
+            overflow: hidden; /* Prevent page scrolling */
             -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            /* Prevent rubber-banding on iOS */
-            overscroll-behavior: none;
         }
 
-        /* Utility */
+        /* Custom Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .text-shadow { text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
 
         /* Animations */
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-        .animate-slide-up { animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-        /* Backgrounds & Glass */
-        #dynamic-bg {
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 0.8s ease-in-out;
-            filter: blur(40px) brightness(0.4);
-            transform: scale(1.1); /* Prevent blur edges */
-        }
         
+        .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+        .animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        /* Glassmorphism */
         .glass {
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(16px);
@@ -54,31 +34,97 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Mobile specific inputs to prevent zooming */
-        @media screen and (max-width: 768px) {
-            input, select, textarea {
-                font-size: 16px !important;
-            }
-            .mobile-safe-bottom {
-                padding-bottom: calc(1rem + var(--safe-bottom));
-            }
-        }
-
-        /* Result View Layout Helpers */
-        .mask-gradient-bottom {
-            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        /* Interactive Elements */
-        .touch-target {
-            min-height: 44px;
-            min-width: 44px;
+        /* Dynamic Background */
+        #dynamic-bg {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.8s ease-in-out;
+            transform: scale(1.05);
+            /* Stronger blur for aesthetics */
+            filter: blur(50px) brightness(0.4);
+            -webkit-filter: blur(50px) brightness(0.4);
+        }
+        #bg-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(circle at center, rgba(2,6,23,0.3) 0%, rgba(2,6,23,0.8) 100%);
         }
 
-        /* Collapsible Section */
+        /* Aspect Ratio Helpers */
+        .aspect-video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 */
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .aspect-video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Search Dropdown Animation */
+        #searchResults {
+            transition: all 0.2s ease-in-out;
+            transform-origin: top;
+        }
+        
+        /* Text Shadow */
+        .text-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.8); }
+        
+
+        /* --- Mobile friendliness (minimal, non-visual) --- */
+
+        /* Use stable viewport units on mobile to avoid 100vh jumps (address bar) */
+        body { height: 100svh; }
+
+        /* Respect notches / safe areas */
+        header {
+            padding-top: calc(0.75rem + env(safe-area-inset-top));
+            padding-left: calc(1rem + env(safe-area-inset-left));
+            padding-right: calc(1rem + env(safe-area-inset-right));
+        }
+        footer {
+            bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* Make scroll containers feel native on iOS */
+        .no-scrollbar {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Prevent iOS input-zoom by ensuring >=16px font size on small screens */
+        @media (max-width: 640px) {
+            input, select, textarea { font-size: 16px !important; }
+            /* Keep search results usable on small screens */
+            #searchResults { max-height: calc(60svh - 1rem); }
+            /* Reduce horizontal squeeze in header without changing layout structure */
+            header .mx-4 { margin-left: 0.75rem; margin-right: 0.75rem; }
+        }
+
+        /* Allow vertical panning while still preventing accidental double-tap issues */
+        html, body { touch-action: pan-y; }
+        /* Expand/Collapse Transition */
         .collapsible-content {
-            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
             max-height: 0;
             overflow: hidden;
             opacity: 0;
@@ -87,276 +133,301 @@
             max-height: 500px;
             opacity: 1;
         }
+    
+/* --- Enhanced mobile layout tweaks (keep design same, improve usability) --- */
+:root{
+    --header-h: 64px;
+}
+header{ min-height: var(--header-h); }
 
-        /* Aspect Ratio for Videos */
-        .aspect-video-container {
-            position: relative;
-            width: 100%;
-            padding-bottom: 56.25%;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .aspect-video-container iframe {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-        }
+/* Use small viewport height everywhere (Tailwind h-screen uses 100vh) */
+.h-screen{ height: 100svh !important; }
+.h-full{ height: 100% !important; }
+
+/* Ensure main scroll areas start below the fixed header on mobile */
+@media (max-width: 768px){
+    #genreSelectionView{
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 1rem) !important;
+        padding-bottom: calc(3.5rem + env(safe-area-inset-bottom)) !important;
+    }
+    #resultView{
+        padding-top: 0 !important;
+    }
+    #backBtn{
+        top: calc(var(--header-h) + env(safe-area-inset-top) + 0.5rem) !important;
+        left: calc(1rem + env(safe-area-inset-left)) !important;
+    }
+    #posterPane{
+        padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 0.75rem) !important;
+        padding-left: calc(1.25rem + env(safe-area-inset-left)) !important;
+        padding-right: calc(1.25rem + env(safe-area-inset-right)) !important;
+        height: 38svh !important;
+    }
+    #detailsPane{
+        height: calc(62svh - env(safe-area-inset-bottom)) !important;
+        padding-top: 0.75rem !important;
+    }
+    #resTitle{
+        font-size: clamp(1.9rem, 6vw, 3rem) !important;
+        line-height: 1.05 !important;
+    }
+    #resTagline{
+        font-size: 0.95rem !important;
+    }
+    /* Make provider logos easier to tap */
+    .provider-logo{
+        width: 44px !important;
+        height: 44px !important;
+    }
+    /* Increase tap target for chips/buttons in bottom bar */
+    #resultBottomBar button, #resultBottomBar a{
+        min-height: 48px;
+    }
+}
+
+/* Smooth scroll + prevent horizontal layout shifts on mobile */
+html{ -webkit-text-size-adjust: 100%; }
+*{ box-sizing: border-box; }
     </style>
 </head>
-<body class="flex flex-col h-[100svh] w-full selection:bg-rose-500/30">
+<body class="flex flex-col h-screen w-full font-sans antialiased selection:bg-rose-500/30">
 
     <!-- Backgrounds -->
     <div id="dynamic-bg"></div>
-    <div class="absolute inset-0 z-0 bg-gradient-to-b from-black/20 via-black/40 to-slate-950/90 pointer-events-none"></div>
+    <div id="bg-overlay"></div>
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
 
-    <!-- Header (Fixed) -->
-    <header class="fixed top-0 left-0 right-0 z-50 h-16 px-4 flex items-center justify-between bg-slate-950/80 backdrop-blur-md border-b border-white/5 pt-[env(safe-area-inset-top)] transition-all">
-        
+    <!-- Header (Fixed Top) -->
+    <header class="fixed top-0 left-0 right-0 z-50 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-black/60 backdrop-blur-xl border-b border-white/5 pointer-events-auto">
         <!-- Logo -->
-        <div class="flex items-center gap-2 cursor-pointer group flex-shrink-0" id="logoBtn">
-            <div class="p-1.5 bg-gradient-to-br from-rose-600 to-purple-600 rounded-lg shadow-lg group-active:scale-95 transition-transform">
+        <div class="flex items-center gap-2 group cursor-pointer flex-shrink-0" id="logoBtn">
+            <div class="p-1.5 bg-gradient-to-br from-rose-600 to-purple-600 rounded-lg shadow-lg group-hover:scale-105 transition-transform">
                 <i data-lucide="clapperboard" class="text-white w-5 h-5"></i>
             </div>
-            <span class="hidden md:block text-lg font-black tracking-tighter text-white">Watch<span class="text-rose-500">Next</span></span>
+            <span class="text-xl font-black tracking-tighter text-white drop-shadow-md hidden md:block">
+                Watch<span class="text-rose-500">Next</span>
+            </span>
         </div>
 
-        <!-- Search Bar -->
-        <div class="flex-1 max-w-md mx-3 relative">
-            <div class="bg-white/10 rounded-full flex items-center px-3 py-1.5 border border-white/5 focus-within:bg-slate-900 focus-within:border-rose-500/50 transition-all group">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2"></i>
-                <input type="text" id="searchInput" placeholder="Search movies..." class="bg-transparent border-none text-white placeholder-slate-400 text-sm w-full focus:outline-none h-full py-1">
-                <button id="clearSearch" class="hidden text-slate-400 p-1 rounded-full hover:bg-white/10 active:bg-white/20 touch-target flex items-center justify-center">
-                    <i data-lucide="x" class="w-3 h-3"></i>
-                </button>
+        <!-- CENTER: Search Bar (Global) -->
+        <div class="relative w-full max-w-md mx-4">
+            <div class="bg-white/10 rounded-full flex items-center px-4 py-2 border border-white/5 focus-within:bg-white/15 focus-within:border-rose-500/50 transition-all group">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2 group-focus-within:text-white transition-colors"></i>
+                <input type="text" id="searchInput" placeholder="Search..." class="bg-transparent border-none text-white placeholder-slate-400 text-sm w-full focus:outline-none">
+                <button id="clearSearch" class="hidden text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"><i data-lucide="x" class="w-3 h-3"></i></button>
             </div>
-            <!-- Results Dropdown -->
-            <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl hidden max-h-[60vh] overflow-y-auto z-[90]"></div>
+            <!-- Search Results -->
+            <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl hidden max-h-[60vh] overflow-y-auto custom-scroll z-[90]"></div>
         </div>
-
-        <!-- Mode Toggle -->
+        
+        <!-- Toggle -->
         <div class="flex items-center bg-black/40 p-1 rounded-full border border-white/10 flex-shrink-0">
-            <button id="modeMovie" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all bg-rose-600 text-white shadow-lg touch-target flex items-center justify-center">Movies</button>
-            <button id="modeTV" class="px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-400 hover:text-white transition-all touch-target flex items-center justify-center">TV</button>
+            <button id="modeMovie" class="px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg">Movies</button>
+            <button id="modeTV" class="px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all">TV</button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="relative z-10 flex-grow w-full h-full overflow-hidden pt-16">
+    <!-- Main Container -->
+    <main class="relative z-10 flex-grow flex flex-col w-full h-full overflow-hidden">
         
         <!-- Error Toast -->
-        <div id="errorToast" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-rose-600 text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 z-[100] animate-fade-in text-sm font-medium whitespace-nowrap">
+        <div id="errorToast" class="hidden absolute top-20 left-1/2 -translate-x-1/2 bg-red-500/90 text-white px-6 py-3 rounded-full shadow-2xl items-center gap-3 z-[100] animate-fade-in backdrop-blur-md border border-white/10">
             <i data-lucide="alert-circle" class="w-4 h-4"></i>
-            <span id="errorText">Error message</span>
+            <span id="errorText" class="text-sm font-medium">Error message</span>
+            <button onclick="document.getElementById('errorToast').classList.add('hidden')" class="ml-2 opacity-80 hover:opacity-100">✕</button>
         </div>
 
         <!-- VIEW 1: SELECTION -->
-        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pb-24 px-4">
+        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pt-24 pb-12 px-4 flex flex-col items-center">
             
-            <div class="flex flex-col items-center justify-center min-h-[20vh] py-6 animate-fade-in">
-                <h2 class="text-3xl md:text-5xl font-black text-white text-center leading-tight mb-2 text-shadow">
-                    Pick your <span class="text-rose-500">poison</span>.
-                </h2>
-                <p id="modeDescription" class="text-slate-400 text-sm font-medium uppercase tracking-widest opacity-80">Movies</p>
+            <div class="text-center mb-8 mt-4 animate-fade-in w-full max-w-3xl">
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-2 text-shadow tracking-tight">Find your next <span class="text-rose-500">obsession</span>.</h2>
+                <p id="modeDescription" class="text-slate-300 text-base md:text-lg font-medium opacity-80">Browsing Movies</p>
             </div>
 
-            <!-- Filters Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-8 w-full max-w-5xl mx-auto animate-fade-in delay-75">
-                <!-- Select Wrappers -->
-                <div class="glass rounded-xl p-2 md:p-3 relative group">
-                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Era</label>
-                    <select id="decadeFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none appearance-none h-6">
-                        <option value="" class="bg-slate-900">Any Time</option>
-                        <option value="2024" class="bg-slate-900">New (2024-25)</option>
-                        <option value="2020" class="bg-slate-900">2020s</option>
-                        <option value="2010" class="bg-slate-900">2010s</option>
-                        <option value="2000" class="bg-slate-900">2000s</option>
-                        <option value="1990" class="bg-slate-900">90s Classics</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 bottom-3 w-3 h-3 text-slate-500 pointer-events-none"></i>
-                </div>
-                
-                <div class="glass rounded-xl p-2 md:p-3 relative group">
-                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Language</label>
-                    <select id="languageFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none appearance-none h-6">
-                        <option value="en" class="bg-slate-900">English</option>
-                        <option value="hi" class="bg-slate-900">Hindi</option>
-                        <option value="kn" class="bg-slate-900">Kannada</option>
-                        <option value="ta" class="bg-slate-900">Tamil</option>
-                        <option value="te" class="bg-slate-900">Telugu</option>
-                        <option value="ml" class="bg-slate-900">Malayalam</option>
-                        <option value="ko" class="bg-slate-900">Korean</option>
-                        <option value="ja" class="bg-slate-900">Japanese</option>
-                        <option value="" class="bg-slate-900">All</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 bottom-3 w-3 h-3 text-slate-500 pointer-events-none"></i>
-                </div>
-
-                <div class="glass rounded-xl p-2 md:p-3 relative group">
-                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Length</label>
-                    <select id="runtimeFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none appearance-none h-6">
-                        <option value="" class="bg-slate-900">Any</option>
-                        <option value="short" class="bg-slate-900">Short (&lt; 90m)</option>
-                        <option value="medium" class="bg-slate-900">Standard</option>
-                        <option value="long" class="bg-slate-900">Epic (&gt; 120m)</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 bottom-3 w-3 h-3 text-slate-500 pointer-events-none"></i>
-                </div>
-
-                <div class="glass rounded-xl p-2 md:p-3 relative group">
-                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Sort</label>
-                    <select id="sortFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none appearance-none h-6">
-                        <option value="popularity.desc" class="bg-slate-900">Popularity</option>
-                        <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
-                        <option value="revenue.desc" class="bg-slate-900">Box Office</option>
-                        <option value="primary_release_date.desc" class="bg-slate-900">Newest</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 bottom-3 w-3 h-3 text-slate-500 pointer-events-none"></i>
-                </div>
-
-                <button id="surpriseBtn" class="col-span-2 md:col-span-1 bg-gradient-to-br from-purple-600 to-rose-600 rounded-xl p-2 flex flex-col items-center justify-center text-white font-bold active:scale-95 transition-transform shadow-lg shadow-rose-600/20 group cursor-pointer border border-white/10 touch-target h-full">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="sparkles" class="w-4 h-4 group-hover:animate-spin"></i>
-                        <span class="text-xs">Surprise Me</span>
+            <!-- Filters Bar -->
+            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-3 mb-10 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Era</label>
+                    <div class="relative">
+                        <select id="decadeFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="" class="bg-slate-900">Any Time</option>
+                            <option value="2024" class="bg-slate-900">New (2024-25)</option>
+                            <option value="2020" class="bg-slate-900">2020s</option>
+                            <option value="2010" class="bg-slate-900">2010s</option>
+                            <option value="2000" class="bg-slate-900">2000s</option>
+                            <option value="1990" class="bg-slate-900">90s Classics</option>
+                            <option value="1980" class="bg-slate-900">80s Retro</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
                     </div>
+                </div>
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Language</label>
+                    <div class="relative">
+                        <select id="languageFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="en" class="bg-slate-900">English</option>
+                            <option value="hi" class="bg-slate-900">Hindi</option>
+                            <option value="kn" class="bg-slate-900">Kannada</option>
+                            <option value="ta" class="bg-slate-900">Tamil</option>
+                            <option value="te" class="bg-slate-900">Telugu</option>
+                            <option value="ml" class="bg-slate-900">Malayalam</option>
+                            <option value="ko" class="bg-slate-900">Korean</option>
+                            <option value="ja" class="bg-slate-900">Japanese</option>
+                            <option value="" class="bg-slate-900">All</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
+                </div>
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Length</label>
+                    <div class="relative">
+                        <select id="runtimeFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="" class="bg-slate-900">Any</option>
+                            <option value="short" class="bg-slate-900">Short (&lt; 90m)</option>
+                            <option value="medium" class="bg-slate-900">Standard</option>
+                            <option value="long" class="bg-slate-900">Epic (&gt; 120m)</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
+                </div>
+                <div class="glass rounded-xl p-3 flex flex-col justify-center">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Sort</label>
+                    <div class="relative">
+                        <select id="sortFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none cursor-pointer appearance-none">
+                            <option value="popularity.desc" class="bg-slate-900">Popularity</option>
+                            <option value="vote_average.desc" class="bg-slate-900">Top Rated</option>
+                            <option value="revenue.desc" class="bg-slate-900">Box Office</option>
+                            <option value="primary_release_date.desc" class="bg-slate-900">Newest</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
+                    </div>
+                </div>
+                <button id="surpriseBtn" class="bg-gradient-to-br from-purple-600 to-rose-600 rounded-xl p-2 flex flex-col items-center justify-center text-white font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-rose-600/20 group cursor-pointer border border-white/10">
+                    <i data-lucide="sparkles" class="w-4 h-4 mb-1 group-hover:animate-spin"></i>
+                    <span class="text-xs">Surprise Me</span>
                 </button>
             </div>
 
             <!-- Genre Grid -->
-            <div id="genreGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full max-w-6xl mx-auto pb-safe animate-fade-in delay-100">
+            <div id="genreGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full max-w-6xl pb-20 animate-fade-in relative z-0" style="animation-delay: 0.2s">
                 <!-- Genres injected here -->
             </div>
-            
-            <!-- Bottom safe area spacer -->
-            <div class="h-[env(safe-area-inset-bottom)] w-full"></div>
         </div>
 
-        <!-- VIEW 2: LOADING -->
-        <div id="loadingView" class="hidden absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-            <div class="relative w-20 h-20 mb-6">
+        <!-- VIEW 2: LOADING OVERLAY -->
+        <div id="loadingView" class="hidden absolute inset-0 z-[60] bg-black/60 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6">
+            <div class="relative w-24 h-24 mb-6">
                <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
                <div class="absolute inset-0 rounded-full border-t-4 border-rose-500 animate-spin"></div>
             </div>
-            <h3 class="text-xl font-bold text-white">Loading...</h3>
+            <h3 id="loadingText" class="text-2xl font-bold text-white mb-2">Finding the perfect pick...</h3>
+            <p id="loadingSubtext" class="text-slate-400 text-sm">Searching the multiverse</p>
         </div>
 
         <!-- VIEW 3: RESULT -->
-        <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full bg-slate-950">
+        <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full overflow-hidden bg-black/80">
             
-            <!-- Mobile Back Button (Floating) -->
-            <button id="backBtn" onclick="resetApp()" class="md:hidden absolute top-2 left-4 z-50 bg-black/60 backdrop-blur-md p-2 rounded-full text-white border border-white/10 shadow-lg active:scale-90 transition-transform touch-target">
+            <!-- Close / Back Button -->
+            <button id="backBtn" onclick="resetApp()" class="md:hidden absolute top-20 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-6 h-6"></i>
             </button>
 
-            <!-- LEFT/TOP: Poster Area -->
-            <!-- Mobile: Height reduced to 35% of screen height (svh) for better balance -->
-            <div id="posterPane" class="w-full md:w-5/12 h-[35svh] md:h-full relative bg-slate-900 flex-shrink-0 flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-white/5">
-                <!-- Background Image (Blured version for fill) -->
-                <div id="posterBgFill" class="absolute inset-0 bg-cover bg-center blur-xl opacity-50"></div>
-                
-                <!-- Main Poster Image -->
-                <div id="posterArea" class="relative z-10 h-full w-full md:w-auto md:h-auto md:max-w-[80%] md:aspect-[2/3] md:rounded-xl md:shadow-2xl md:border md:border-white/10 overflow-hidden">
-                    <!-- Injected via JS -->
+            <!-- LEFT/TOP: Permanent Poster Area -->
+            <div id="posterPane" class="w-full md:w-4/12 h-[40vh] md:h-full relative bg-black/50 flex-shrink-0 border-r border-white/5 flex items-center justify-center p-6 md:p-12 pt-24 md:pt-12">
+                <div id="posterArea" class="w-full max-w-[280px] md:max-w-full h-auto aspect-[2/3] relative shadow-2xl rounded-xl overflow-hidden border border-white/10 transform transition-transform hover:scale-[1.02]">
+                    <!-- Poster injected here via JS -->
                 </div>
-                
-                <!-- Gradient overlay for mobile text readability at edges -->
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent md:hidden pointer-events-none z-20"></div>
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent md:hidden pointer-events-none"></div>
             </div>
 
-            <!-- RIGHT/BOTTOM: Details Area -->
-            <!-- Mobile: Takes up remaining 65% space -->
-            <div id="detailsPane" class="w-full md:w-7/12 h-[65svh] md:h-full bg-slate-950 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar relative">
+            <!-- RIGHT/BOTTOM: Details -->
+            <div id="detailsPane" class="w-full md:w-8/12 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative pt-4 md:pt-24">
                 
-                <div class="p-5 md:p-10 pb-32 max-w-3xl mx-auto w-full">
+                <div class="p-6 md:p-10 max-w-4xl mx-auto w-full">
                     
-                    <!-- Metadata Header -->
-                    <div class="flex flex-wrap items-center gap-2 mb-3 mt-2 md:mt-0">
-                        <span id="resGenre" class="text-[10px] font-bold tracking-widest text-rose-500 uppercase border border-rose-500/30 px-2 py-0.5 rounded-md bg-rose-500/5">Action</span>
-                        <div class="w-1 h-1 bg-slate-600 rounded-full"></div>
+                    <!-- Header Info -->
+                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                        <span id="resGenre" class="text-xs font-bold tracking-widest text-rose-500 uppercase border border-rose-500/30 px-2 py-0.5 rounded">Action</span>
                         <span id="resYear" class="text-xs font-bold text-slate-300">2024</span>
-                        <div class="w-1 h-1 bg-slate-600 rounded-full"></div>
                         <div class="flex items-center gap-1 text-xs font-bold text-yellow-400">
                             <i data-lucide="star" class="w-3 h-3 fill-current"></i> <span id="resRating">8.5</span>
                         </div>
                     </div>
 
-                    <!-- Title & Tagline -->
-                    <h1 id="resTitle" class="text-2xl md:text-5xl font-black text-white leading-tight mb-2 text-shadow">Movie Title</h1>
-                    <p id="resTagline" class="text-xs md:text-lg text-slate-400 italic mb-6 font-light border-l-2 border-rose-500 pl-3">"The tagline goes here"</p>
+                    <!-- Title -->
+                    <h1 id="resTitle" class="text-3xl md:text-6xl font-black text-white leading-tight mb-2 text-shadow">Movie Title</h1>
+                    <p id="resTagline" class="text-sm md:text-lg text-slate-400 italic mb-6 font-light border-l-2 border-rose-500 pl-3">"The tagline goes here"</p>
 
-                    <!-- Action Buttons (Mobile First) -->
-                    <div class="flex gap-2 mb-6 md:hidden">
-                        <a id="streamLinkMobile" href="#" target="_blank" class="flex-1 bg-rose-600 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-900/20 active:scale-95 transition-transform">
-                            <i data-lucide="play-circle" class="w-4 h-4"></i> Stream
-                        </a>
-                        <button onclick="shareContent()" class="bg-slate-800 text-white p-3 rounded-xl border border-white/10 active:scale-95 transition-transform">
-                            <i data-lucide="share-2" class="w-4 h-4"></i>
-                        </button>
+                    <!-- Metadata Chips -->
+                    <div class="flex flex-wrap gap-2 mb-6" id="metaChips">
+                        <!-- Chips injected JS -->
                     </div>
-
-                    <!-- Info Grid -->
-                    <div id="metaChips" class="flex flex-wrap gap-2 mb-4">
-                        <!-- Chips -->
+                    
+                    <!-- Extended Info Panel -->
+                    <div id="extraInfoPanel" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-xs text-slate-400 p-4 bg-white/5 rounded-xl border border-white/5">
+                        <!-- Injected JS -->
                     </div>
 
                     <!-- Plot -->
-                    <div class="bg-white/5 rounded-xl p-4 border border-white/5 mb-6">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Synopsis</h4>
-                        <p id="resPlot" class="text-slate-300 text-sm leading-relaxed font-light">
-                            Detailed plot summary goes here...
-                        </p>
-                    </div>
+                    <p id="resPlot" class="text-slate-300 text-sm md:text-base leading-relaxed mb-6 font-light">
+                        Detailed plot summary goes here...
+                    </p>
 
-                    <!-- Trailer Accordion -->
-                    <div class="mb-6 border border-white/10 rounded-xl overflow-hidden bg-black/40">
-                        <button id="toggleTrailerBtn" class="w-full flex items-center justify-between p-4 text-sm font-bold text-white hover:bg-white/5 transition-colors touch-target">
-                            <span class="flex items-center gap-2"><i data-lucide="youtube" class="w-4 h-4 text-red-500"></i> Watch Trailer</span>
-                            <i id="trailerIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform text-slate-400"></i>
+                    <!-- COLLAPSIBLE TRAILER -->
+                    <div class="mb-8 border border-white/10 rounded-xl overflow-hidden bg-black/40">
+                        <button id="toggleTrailerBtn" class="w-full flex items-center justify-between p-4 text-sm font-bold text-white hover:bg-white/5 transition-colors">
+                            <span class="flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4 text-rose-500"></i> Watch Trailer</span>
+                            <i id="trailerIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
                         </button>
-                        <div id="inlineTrailerContainer" class="collapsible-content bg-black">
+                        <div id="inlineTrailerContainer" class="collapsible-content">
                             <div id="inlineTrailer" class="w-full aspect-video-container"></div>
                         </div>
                     </div>
 
                     <!-- Providers -->
                     <div id="providersArea" class="mb-6 hidden">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">Where to Watch</h4>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="tv" class="w-3 h-3"></i> Stream On</h4>
                         <div id="providerIcons" class="flex flex-wrap gap-3"></div>
                     </div>
 
                     <!-- Cast -->
                     <div class="mb-6">
-                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Cast</h4>
-                        <div id="castList" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="users" class="w-3 h-3"></i> Starring</h4>
+                        <div id="castList" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 mask-gradient-right"></div>
                     </div>
-                    
-                    <!-- Bottom Spacer for sticky bar -->
-                    <div class="h-24 md:h-0"></div>
+
+                    <!-- Recommendations -->
+                    <div id="recsArea" class="mb-24 md:mb-12 hidden">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i data-lucide="thumbs-up" class="w-3 h-3"></i> You Might Like</h4>
+                        <div id="recsList" class="flex gap-3 overflow-x-auto no-scrollbar pb-2"></div>
+                    </div>
                 </div>
 
-                <!-- Desktop Bottom Bar (Hidden on Mobile main view, shown differently) -->
-                <div id="resultBottomBar" class="hidden md:flex sticky bottom-0 bg-slate-950/90 backdrop-blur-lg border-t border-white/10 p-4 gap-3 z-20 mt-auto">
-                     <button onclick="resetApp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2">
-                        <i data-lucide="x" class="w-4 h-4"></i> Reject
+                <!-- Sticky Bottom Bar -->
+                <div id="resultBottomBar" class="sticky bottom-0 bg-black/90 backdrop-blur-lg border-t border-white/10 p-4 md:p-6 flex gap-3 z-20 mt-auto">
+                     <button onclick="resetApp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 md:py-4 rounded-xl font-bold transition-all border border-white/10 flex items-center justify-center gap-2">
+                        <i data-lucide="x" class="w-4 h-4"></i> <span class="hidden md:inline">Reject</span>
                     </button>
-                    <a id="streamLinkDesktop" href="#" target="_blank" class="flex-[2] bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 hover:scale-[1.02]">
+                    <a id="streamLink" href="#" target="_blank" class="flex-[2] bg-rose-600 hover:bg-rose-500 text-white py-3 md:py-4 rounded-xl font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 hover:scale-[1.02]">
                         <i data-lucide="play-circle" class="w-5 h-5"></i> Stream Now
                     </a>
-                </div>
-                
-                <!-- Floating Mobile Close Button (Bottom Center) -->
-                <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-                    <button onclick="resetApp()" class="bg-slate-900/90 backdrop-blur-md text-slate-300 hover:text-white px-6 py-3 rounded-full border border-white/10 shadow-2xl flex items-center gap-2 font-semibold text-sm active:scale-95 transition-transform">
-                        <i data-lucide="x" class="w-4 h-4"></i> Close
+                    <button onclick="shareContent()" class="w-14 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
                     </button>
                 </div>
 
             </div>
+
         </div>
 
     </main>
+
+    <!-- Permanent Footer -->
+    <footer class="fixed bottom-2 left-0 right-0 text-center z-[100] pointer-events-none">
+        <p class="text-[10px] text-slate-500 font-medium opacity-60">Arnav Dugad © 2025</p>
+    </footer>
 
     <script>
         // --- CONFIG ---
@@ -394,20 +465,18 @@
         };
 
         const TV_GENRES = {
-            'Action':{id:10759, icon:'sword'}, 'Animation':{id:16, icon:'palette'}, 'Comedy':{id:35, icon:'smile'},
+            'Action & Adv':{id:10759, icon:'sword'}, 'Animation':{id:16, icon:'palette'}, 'Comedy':{id:35, icon:'smile'},
             'Crime':{id:80, icon:'siren'}, 'Documentary':{id:99, icon:'file-text'}, 'Drama':{id:18, icon:'drama'},
             'Family':{id:10751, icon:'home'}, 'Kids':{id:10762, icon:'baby'}, 'Mystery':{id:9648, icon:'search'},
-            'News':{id:10763, icon:'mic'}, 'Reality':{id:10764, icon:'video'}, 'Sci-Fi':{id:10765, icon:'rocket'},
-            'Soap':{id:10766, icon:'coffee'}, 'Talk':{id:10767, icon:'mic-2'}, 'War':{id:10768, icon:'shield'}
+            'News':{id:10763, icon:'mic'}, 'Reality':{id:10764, icon:'video'}, 'Sci-Fi & Fantasy':{id:10765, icon:'rocket'},
+            'Soap':{id:10766, icon:'coffee'}, 'Talk':{id:10767, icon:'mic-2'}, 'War & Politics':{id:10768, icon:'shield'}
         };
 
         // --- STATE ---
-        let currentMode = 'movie'; 
+        let currentMode = 'movie'; // 'movie' or 'tv'
         let currentItem = null;
         let searchTimeout = null;
         let isTrailerExpanded = false;
-        let touchStartY = 0;
-        let touchEndY = 0;
 
         // --- INIT ---
         function init() {
@@ -424,6 +493,13 @@
             document.getElementById('surpriseBtn').onclick = surpriseMe;
             document.getElementById('toggleTrailerBtn').onclick = toggleTrailer;
 
+            window.addEventListener('resize', () => {
+                const c = document.getElementById('confetti');
+                if (!c) return;
+                c.width = window.innerWidth;
+                c.height = window.innerHeight;
+            });
+
             // Search Listeners
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', handleSearch);
@@ -431,30 +507,7 @@
                 searchInput.value = '';
                 document.getElementById('searchResults').classList.add('hidden');
                 document.getElementById('clearSearch').classList.add('hidden');
-                searchInput.focus();
             };
-
-            // Swipe to close Logic (Mobile)
-            const resView = document.getElementById('resultView');
-            resView.addEventListener('touchstart', e => {
-                touchStartY = e.changedTouches[0].screenY;
-            }, {passive: true});
-
-            resView.addEventListener('touchend', e => {
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            }, {passive: true});
-        }
-
-        function handleSwipe() {
-            // If user swipes down significantly on the result view, and scroll is at top
-            if (touchEndY - touchStartY > 150) {
-                // Ideally check if detailsPane is at scrollTop 0, but for simplicity:
-                const details = document.getElementById('detailsPane');
-                if(details.scrollTop < 10) {
-                   resetApp();
-                }
-            }
         }
 
         function toggleTrailer() {
@@ -471,24 +524,12 @@
             }
         }
 
+        // --- NAVIGATION ---
         function switchMode(mode) {
             currentMode = mode;
-            // Update UI state manually to avoid complex class logic in HTML
-            const btnMovie = document.getElementById('modeMovie');
-            const btnTV = document.getElementById('modeTV');
-            
-            const activeClass = "bg-rose-600 text-white shadow-lg";
-            const inactiveClass = "text-slate-400 hover:text-white";
-
-            if (mode === 'movie') {
-                btnMovie.className = `px-3 py-1.5 rounded-full text-[10px] font-bold transition-all touch-target flex items-center justify-center ${activeClass}`;
-                btnTV.className = `px-3 py-1.5 rounded-full text-[10px] font-bold transition-all touch-target flex items-center justify-center ${inactiveClass}`;
-                document.getElementById('modeDescription').textContent = "Movies";
-            } else {
-                btnMovie.className = `px-3 py-1.5 rounded-full text-[10px] font-bold transition-all touch-target flex items-center justify-center ${inactiveClass}`;
-                btnTV.className = `px-3 py-1.5 rounded-full text-[10px] font-bold transition-all touch-target flex items-center justify-center ${activeClass}`;
-                document.getElementById('modeDescription').textContent = "TV Series";
-            }
+            document.getElementById('modeMovie').className = mode === 'movie' ? "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all";
+            document.getElementById('modeTV').className = mode === 'tv' ? "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all";
+            document.getElementById('modeDescription').textContent = mode === 'movie' ? "Browsing Movies" : "Browsing TV Series";
             renderGenres();
             lucide.createIcons();
         }
@@ -496,17 +537,9 @@
         function resetApp() {
             document.getElementById('resultView').classList.add('hidden');
             document.getElementById('genreSelectionView').classList.remove('hidden');
-            
-            // Clean up heavy elements
-            setTimeout(() => {
-                document.getElementById('posterArea').innerHTML = '';
-                document.getElementById('inlineTrailer').innerHTML = '';
-                document.getElementById('posterBgFill').style.backgroundImage = 'none';
-            }, 300);
-            
+            document.getElementById('posterArea').innerHTML = '';
+            document.getElementById('inlineTrailer').innerHTML = '';
             document.getElementById('dynamic-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg')`;
-            
-            // Reset Trailer
             isTrailerExpanded = false;
             document.getElementById('inlineTrailerContainer').classList.remove('expanded');
             document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
@@ -519,17 +552,17 @@
 
             Object.entries(GENRES).forEach(([name, data]) => {
                 const btn = document.createElement('button');
-                btn.className = "group relative h-20 md:h-24 bg-slate-800/60 hover:bg-rose-600 rounded-xl border border-white/5 transition-all overflow-hidden flex flex-col items-center justify-center gap-1 active:scale-95 touch-target shadow-md";
+                btn.className = "group relative h-24 bg-slate-800/50 hover:bg-rose-600 rounded-xl border border-white/5 transition-all overflow-hidden flex flex-col items-center justify-center gap-1 active:scale-95";
                 
                 let iconEl;
-                if(data.icon === 'sword') iconEl = '<i data-lucide="sword" class="w-5 h-5 md:w-6 md:h-6 text-slate-400 group-hover:text-white transition-colors"></i>';
-                else if(data.icon === 'ghost') iconEl = '<div class="text-xl md:text-2xl group-hover:scale-110 transition-transform">👻</div>';
-                else iconEl = `<i data-lucide="${data.icon}" class="w-5 h-5 md:w-6 md:h-6 text-slate-400 group-hover:text-white transition-colors"></i>`;
+                if(data.icon === 'sword') iconEl = '<i data-lucide="sword" class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors"></i>';
+                else if(data.icon === 'ghost') iconEl = '<div class="text-2xl group-hover:scale-110 transition-transform">👻</div>';
+                else iconEl = `<i data-lucide="${data.icon}" class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors"></i>`;
 
                 btn.innerHTML = `
                     <div class="z-10 flex flex-col items-center gap-1">
                         ${iconEl}
-                        <span class="text-[10px] md:text-xs font-bold text-slate-300 group-hover:text-white">${name}</span>
+                        <span class="text-xs font-bold text-slate-300 group-hover:text-white">${name}</span>
                     </div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 `;
@@ -538,7 +571,7 @@
             });
         }
 
-        // --- SEARCH ---
+        // --- SEARCH LOGIC ---
         function handleSearch(e) {
             const query = e.target.value.trim();
             const resultsDiv = document.getElementById('searchResults');
@@ -574,16 +607,16 @@
                             if(!item.poster_path && !item.backdrop_path) return;
                             
                             const div = document.createElement('div');
-                            div.className = "flex items-center gap-3 p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 transition-colors";
-                            const img = item.poster_path ? `${PROFILE_URL}${item.poster_path}` : 'https://via.placeholder.com/50x75?text=No+Img';
+                            div.className = "flex items-center gap-4 p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 transition-colors";
+                            const img = item.poster_path ? `${POSTER_URL}${item.poster_path}` : 'https://via.placeholder.com/50x75?text=No+Img';
                             const title = item.title || item.name;
                             const year = (item.release_date || item.first_air_date || '').split('-')[0];
-                            const type = item.media_type === 'movie' ? 'Movie' : 'TV';
+                            const type = item.media_type === 'movie' ? 'Movie' : 'TV Series';
                             
                             div.innerHTML = `
-                                <img src="${img}" class="w-8 h-12 object-cover rounded-md shadow bg-slate-800">
+                                <img src="${img}" class="w-10 h-14 object-cover rounded-md shadow-md bg-slate-800">
                                 <div class="flex flex-col text-left">
-                                    <span class="text-sm font-bold text-white leading-tight line-clamp-1">${title}</span>
+                                    <span class="text-sm font-bold text-white leading-tight mb-0.5">${title}</span>
                                     <div class="flex items-center gap-2 text-[10px] text-slate-400">
                                         <span class="uppercase tracking-wider font-semibold text-rose-400">${type}</span>
                                         <span>${year}</span>
@@ -595,7 +628,6 @@
                                 loadItemDetails(item.id);
                                 document.getElementById('searchInput').value = '';
                                 resultsDiv.classList.add('hidden');
-                                document.getElementById('clearSearch').classList.add('hidden');
                             };
                             resultsDiv.appendChild(div);
                         });
@@ -609,7 +641,7 @@
             }, 300); 
         }
 
-        // --- FETCHING ---
+        // --- FETCH LOGIC ---
         function surpriseMe() {
             fireConfetti();
             const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
@@ -638,15 +670,16 @@
                 else if (runtime === 'medium') params += `&with_runtime.gte=90&with_runtime.lte=120`;
                 else if (runtime === 'long') params += `&with_runtime.gte=120`;
 
-                // Smart Randomization
+                // SMART PAGINATION: Fetch page 1 to get stats, then randomize
                 const initRes = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=1&include_adult=false${params}`);
                 const initData = await initRes.json();
 
                 if(!initData.results || initData.total_results === 0) throw new Error("No content found");
 
-                const totalPages = Math.min(initData.total_pages, 10);
+                const totalPages = Math.min(initData.total_pages, 10); // Cap at 10 to ensure popularity
                 const randomPage = Math.floor(Math.random() * totalPages) + 1;
 
+                // If page 1, use initData, else fetch random page
                 let results = initData.results;
                 if(randomPage > 1) {
                     const pageRes = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=${randomPage}&include_adult=false${params}`);
@@ -661,7 +694,7 @@
                 
             } catch (err) {
                 console.error(err);
-                showError("Nothing found with those filters.");
+                showError("Nothing found. Try broadening filters.");
                 showLoading(false);
             }
         }
@@ -685,18 +718,19 @@
                 displayResult(item);
             } catch(e) {
                 console.error("Load Details Error:", e);
-                showError("Failed to load details. Try again.");
+                showError("Failed to load details. Please try again.");
                 showLoading(false);
             }
         }
 
+        // --- DISPLAY LOGIC ---
         function displayResult(item) {
             try {
                 const title = item.title || item.name || "Unknown";
                 const date = item.release_date || item.first_air_date || '';
                 const year = date.split('-')[0] || 'N/A';
                 
-                // Content
+                // Text Content
                 document.getElementById('resTitle').textContent = title;
                 document.getElementById('resTagline').textContent = item.tagline || '';
                 document.getElementById('resYear').textContent = year;
@@ -704,54 +738,77 @@
                 document.getElementById('resPlot').textContent = item.overview || "No synopsis available.";
                 document.getElementById('resGenre').textContent = item.genres?.[0]?.name || 'Unknown';
 
-                // Backgrounds
+                // Background
                 if(item.poster_path) {
                     document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.poster_path}')`;
-                    document.getElementById('posterBgFill').style.backgroundImage = `url('${IMG_URL}${item.poster_path}')`;
                 } else if (item.backdrop_path) {
                     document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.backdrop_path}')`;
-                    document.getElementById('posterBgFill').style.backgroundImage = `url('${IMG_URL}${item.backdrop_path}')`;
                 }
 
-                // Chips
+                // --- INFO LOGIC (MOVIE vs TV) ---
                 const metaChips = document.getElementById('metaChips');
+                const extraPanel = document.getElementById('extraInfoPanel');
                 metaChips.innerHTML = '';
-                metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] md:text-xs font-medium text-white uppercase">${item.original_language || 'EN'}</div>`;
-                
-                if(currentMode === 'movie' && item.runtime) {
-                    metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] md:text-xs font-medium text-white flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${item.runtime}m</div>`;
-                } else if (currentMode === 'tv') {
-                     if(item.number_of_seasons) metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] md:text-xs font-medium text-white flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i> ${item.number_of_seasons} S</div>`;
+                extraPanel.innerHTML = '';
+
+                // Common Chip: Lang
+                metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white uppercase">${item.original_language || 'EN'}</div>`;
+                // Common Chip: Status
+                metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-green-400">${item.status}</div>`;
+
+                if(currentMode === 'movie') {
+                    // Movie Runtime
+                    if(item.runtime) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${item.runtime}m</div>`;
+                    }
+                    // Movie Extra Info
+                    extraPanel.classList.remove('hidden');
+                    extraPanel.innerHTML = `
+                        <div><span class="block font-bold text-slate-500 uppercase">Budget</span><span class="text-white">${item.budget > 0 ? '$'+(item.budget/1000000).toFixed(1)+'M' : '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase">Revenue</span><span class="text-white">${item.revenue > 0 ? '$'+(item.revenue/1000000).toFixed(1)+'M' : '-'}</span></div>
+                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase">Production</span><span class="text-white truncate block">${item.production_companies?.[0]?.name || '-'}</span></div>
+                    `;
+                } else {
+                    // TV Info
+                    if(item.number_of_seasons) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i> ${item.number_of_seasons} Seasons</div>`;
+                    }
+                    if(item.number_of_episodes) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="film" class="w-3 h-3"></i> ${item.number_of_episodes} Eps</div>`;
+                    }
+                    // TV Extra Info
+                    extraPanel.classList.remove('hidden');
+                    extraPanel.innerHTML = `
+                        <div><span class="block font-bold text-slate-500 uppercase">First Air</span><span class="text-white">${item.first_air_date || '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase">Last Air</span><span class="text-white">${item.last_air_date || '-'}</span></div>
+                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase">Network</span><span class="text-white truncate block">${item.networks?.[0]?.name || '-'}</span></div>
+                    `;
                 }
 
                 // Poster
                 const posterArea = document.getElementById('posterArea');
                 if(item.poster_path) {
-                    // Desktop: Full poster. Mobile: Full poster cropped or fitted.
-                    posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover md:object-contain object-top shadow-2xl">`;
+                    posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover shadow-2xl rounded-xl">`;
                 } else {
-                    posterArea.innerHTML = `<div class="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
+                    posterArea.innerHTML = `<div class="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
                 }
 
                 // Trailer
-                const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer') || item.videos?.results?.[0];
+                const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer' && v.official) || item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
                 const inlineTrailer = document.getElementById('inlineTrailer');
                 const toggleBtn = document.getElementById('toggleTrailerBtn');
-                
-                // Reset trailer state
                 inlineTrailer.innerHTML = '';
                 isTrailerExpanded = false;
                 document.getElementById('inlineTrailerContainer').classList.remove('expanded');
-                
+                document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
+
                 if(trailer) {
                     toggleBtn.parentElement.classList.remove('hidden');
-                    // We only load the iframe when expanded to save data, OR load standard embed now
-                    const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=0&controls=1&rel=0&modestbranding=1`;
-                    // Pre-load logic or lazy load? Let's just store the URL and inject on click? 
-                    // For simplicity, inject now but don't autoplay
-                     inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+                    const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=0&controls=1&rel=0`;
+                    inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
                 } else {
                     toggleBtn.parentElement.classList.add('hidden');
+                    inlineTrailer.innerHTML = '';
                 }
 
                 // Providers
@@ -766,12 +823,14 @@
                     const unique = new Map();
                     methods.forEach(p => unique.set(p.provider_id, p));
                     
-                    Array.from(unique.values()).slice(0, 5).forEach(p => {
+                    Array.from(unique.values()).slice(0, 6).forEach(p => {
                         const a = document.createElement('a');
+                        // Direct search link logic
                         let searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.google.com/search?q=watch ${encodeURIComponent(title)} on ${p.provider_name}`;
+                        
                         a.href = searchUrl;
                         a.target = "_blank";
-                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-white/10" title="${p.provider_name}">`;
+                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="provider-logo w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="Watch on ${p.provider_name}">`;
                         provList.appendChild(a);
                     });
                 } else {
@@ -782,30 +841,51 @@
                 const castList = document.getElementById('castList');
                 castList.innerHTML = '';
                 (item.credits?.cast || []).slice(0, 8).forEach(c => {
-                    const div = document.createElement('div');
-                    div.className = "flex flex-col items-center min-w-[60px] gap-1";
-                    const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
-                    div.innerHTML = `
-                        <div class="w-12 h-12 rounded-full overflow-hidden border border-white/20 shadow-sm">
-                            <img src="${img}" class="w-full h-full object-cover">
-                        </div>
-                        <span class="text-[9px] text-slate-400 font-bold text-center truncate w-full">${c.name}</span>
-                    `;
-                    castList.appendChild(div);
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center min-w-[64px] gap-2 group/cast";
+                const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
+                div.innerHTML = `
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(c.name)}" target="_blank" class="block w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-rose-500 transition-all shadow-md">
+                        <img src="${img}" class="w-full h-full object-cover group-hover/cast:scale-110 transition-transform duration-500">
+                    </a>
+                    <span class="text-[10px] text-slate-400 font-bold text-center truncate w-full group-hover/cast:text-white transition-colors">${c.name}</span>
+                `;
+                castList.appendChild(div);
                 });
 
-                // Update Links
-                const justWatchLink = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
-                document.getElementById('streamLinkDesktop').href = justWatchLink;
-                document.getElementById('streamLinkMobile').href = justWatchLink;
+                // Recommendations
+                const recs = item.recommendations?.results || [];
+                const recsArea = document.getElementById('recsArea');
+                const recsList = document.getElementById('recsList');
+                recsList.innerHTML = '';
+                
+                if(recs.length > 0) {
+                    recsArea.classList.remove('hidden');
+                    recs.slice(0, 8).forEach(r => {
+                        if(!r.poster_path) return;
+                        const div = document.createElement('div');
+                        div.className = "relative min-w-[90px] h-[135px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform border border-white/10 shadow-lg group/rec";
+                        div.innerHTML = `
+                            <img src="${POSTER_URL}${r.poster_path}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/rec:opacity-100 transition-opacity"></div>
+                        `;
+                        div.onclick = () => {
+                            // Update mode if media_type is present
+                            if (r.media_type) currentMode = r.media_type; 
+                            loadItemDetails(r.id);
+                        };
+                        recsList.appendChild(div);
+                    });
+                } else {
+                    recsArea.classList.add('hidden');
+                }
 
-                // Toggle Views
+                // Stream Button Link
+                document.getElementById('streamLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
+
+                // Switch Views
                 document.getElementById('genreSelectionView').classList.add('hidden');
                 document.getElementById('resultView').classList.remove('hidden');
-                
-                // Scroll details to top
-                document.getElementById('detailsPane').scrollTop = 0;
-                
                 lucide.createIcons();
 
             } catch (err) {
@@ -816,7 +896,7 @@
             }
         }
 
-        // --- UTILS ---
+        // --- HELPERS ---
         function showLoading(show) {
             const el = document.getElementById('loadingView');
             if(show) el.classList.remove('hidden');
@@ -835,7 +915,7 @@
             const title = currentItem.title || currentItem.name;
             const text = `Check out "${title}" on WatchNext!`;
             if(navigator.share) {
-                navigator.share({ title: 'WatchNext', text: text, url: window.location.href });
+                navigator.share({ title: 'WatchNext Pick', text: text });
             } else {
                 navigator.clipboard.writeText(text);
                 showError("Copied to clipboard!");
@@ -847,11 +927,11 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            const particles = Array.from({length: 40}, () => ({
+            const particles = Array.from({length: 50}, () => ({
                 x: canvas.width/2, y: canvas.height/2,
-                vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
-                color: `hsl(${Math.random()*360}, 100%, 60%)`,
-                life: 80
+                vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
+                color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                life: 100
             }));
             
             function animate() {
@@ -859,8 +939,8 @@
                 let active = false;
                 particles.forEach(p => {
                     if(p.life > 0) {
-                        p.x+=p.vx; p.y+=p.vy; p.vy+=0.4; p.life--;
-                        ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,4,4);
+                        p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life--;
+                        ctx.fillStyle = p.color; ctx.fillRect(p.x,p.y,5,5);
                         active=true;
                     }
                 });
