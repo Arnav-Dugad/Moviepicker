@@ -44,7 +44,7 @@
             z-index: -1;
             background-size: cover;
             background-position: center;
-            filter: blur(20px) brightness(0.3);
+            filter: blur(20px) brightness(0.25);
             transition: background-image 1s ease-in-out;
         }
         #dynamic-bg-overlay {
@@ -54,7 +54,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: linear-gradient(to bottom, rgba(2,6,23,0.8), rgba(2,6,23,0.95));
+            background: linear-gradient(to bottom, rgba(2,6,23,0.7), rgba(2,6,23,0.95));
         }
 
         /* Aspect Ratio for Iframe */
@@ -63,23 +63,16 @@
             width: 100%;
             padding-bottom: 56.25%; /* 16:9 */
             background: #000;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        .aspect-video-container iframe,
-        .aspect-video-container img {
+        .aspect-video-container iframe {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-        }
-        /* Mobile height fix for video container to not take up too much vertical space if needed, 
-           but usually 16:9 is fine. On desktop we want it to fill height. */
-        @media (min-width: 768px) {
-            .aspect-video-container {
-                height: 100%;
-                padding-bottom: 0;
-            }
         }
     </style>
 </head>
@@ -228,25 +221,28 @@
             </div>
             
             <!-- Main Content Area -->
-            <div id="swipeCard" class="flex flex-col md:flex-row bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 animate-fade-in-up w-full relative group">
+            <div id="swipeCard" class="flex flex-col md:flex-row bg-slate-900/80 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 animate-fade-in-up w-full relative group min-h-[500px]">
                 
                 <!-- Like Animation Overlay -->
                 <div id="likeAnimation" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50 opacity-0">
                     <i data-lucide="heart" class="w-48 h-48 text-rose-500 fill-rose-500 drop-shadow-2xl"></i>
                 </div>
 
-                <!-- MEDIA SECTION (Trailer/Poster) -->
-                <!-- On Mobile: 16:9 Aspect Ratio. On Desktop: Full Height. -->
-                <div id="mediaContainer" class="w-full md:w-2/5 lg:w-7/12 bg-black aspect-video-container md:aspect-auto">
-                    <!-- Content injected via JS -->
+                <!-- POSTER SECTION (Permanent Left Side) -->
+                <div class="w-full md:w-2/5 lg:w-5/12 relative bg-slate-950 flex-shrink-0">
+                    <div id="mediaContainer" class="w-full h-full relative">
+                        <!-- Poster injected here -->
+                    </div>
                 </div>
 
-                <!-- Details Section -->
-                <div class="w-full md:w-3/5 lg:w-5/12 p-6 md:p-8 flex flex-col gap-6 relative max-h-[800px] overflow-y-auto no-scrollbar">
+                <!-- DETAILS SECTION (Right Side) -->
+                <div class="w-full md:w-3/5 lg:w-7/12 p-6 md:p-8 flex flex-col gap-6 relative max-h-[850px] overflow-y-auto no-scrollbar">
                     
                     <!-- Header Info -->
                     <div>
-                        <h2 id="movieTitle" class="text-2xl md:text-3xl font-bold text-white leading-tight mb-3">Title</h2>
+                        <h2 id="movieTitle" class="text-2xl md:text-4xl font-bold text-white leading-tight mb-2">Title</h2>
+                        <p id="movieTagline" class="text-rose-400 text-sm font-medium italic mb-3 opacity-90"></p>
+                        
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="bg-yellow-500 text-black px-3 py-1 rounded-full font-bold flex items-center gap-1 text-sm shadow-lg shadow-yellow-500/20">
                                 <i data-lucide="star" class="w-4 h-4 fill-current"></i> <span id="movieRating">0.0</span>
@@ -262,16 +258,23 @@
                         Plot summary...
                     </p>
                     
-                    <!-- Providers Section (NEW) -->
+                    <!-- TRAILER EMBED (New: Embedded in Details) -->
+                    <div id="trailerSection" class="hidden w-full">
+                        <div class="aspect-video-container bg-black rounded-xl overflow-hidden shadow-lg border border-slate-800">
+                             <!-- Iframe injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Providers Section (Interactive) -->
                     <div id="providersSection" class="hidden">
                         <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Where to Watch</h4>
                         <div id="providerIcons" class="flex flex-wrap gap-3">
-                            <!-- Icons injected here -->
+                            <!-- Clickable Icons injected here -->
                         </div>
-                        <div class="mt-2 text-[10px] text-slate-600 italic">Streaming data via JustWatch (India)</div>
+                        <div class="mt-2 text-[10px] text-slate-600 italic">Streaming data via JustWatch</div>
                     </div>
 
-                    <!-- Cast (NEW: With Photos) -->
+                    <!-- Cast (Interactive) -->
                     <div>
                         <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Starring</h4>
                         <div id="movieCast" class="flex flex-wrap gap-4">
@@ -280,8 +283,8 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="grid grid-cols-3 gap-3 mt-auto pt-6 border-t border-slate-800">
-                        <a id="watchLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-bold transition-all text-sm">
+                    <div class="grid grid-cols-3 gap-3 mt-auto pt-6 border-t border-slate-800 sticky bottom-0 bg-slate-900/95 backdrop-blur-sm pb-2 z-10">
+                        <a id="watchLink" href="#" target="_blank" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-bold transition-all text-sm shadow-lg shadow-yellow-500/10">
                             <i data-lucide="tv" class="w-4 h-4"></i> Stream
                         </a>
                         <button id="shareBtn" class="col-span-1 flex items-center justify-center gap-2 px-3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl font-medium transition-all text-sm">
@@ -319,6 +322,9 @@
         const TMDB_POSTER_BASE_URL = "https://image.tmdb.org/t/p/w780";
         const TMDB_PROFILE_BASE_URL = "https://image.tmdb.org/t/p/w185";
         const API_KEY = "2b834d5234781ad70bd646922e9ddd18";
+
+        // Sound Effect
+        const popSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
 
         const MOVIE_GENRES = {
             'Action': { id: 28, icon: 'sword' },
@@ -401,7 +407,8 @@
         function resetApp() {
             switchView('selection');
             selectedGenre = null;
-            document.getElementById('mediaContainer').innerHTML = ''; // Stop video
+            document.getElementById('mediaContainer').innerHTML = ''; // Clear poster
+            document.querySelector('#trailerSection .aspect-video-container').innerHTML = ''; // Stop video
             dynamicBg.style.backgroundImage = 'none';
         }
 
@@ -442,6 +449,7 @@
         }
 
         function surpriseMe() {
+            popSound.play().catch(e => console.log('Audio blocked'));
             fireConfetti();
             const GENRES = currentMode === 'movie' ? MOVIE_GENRES : TV_GENRES;
             const keys = Object.keys(GENRES);
@@ -527,7 +535,6 @@
 
         async function getContentDetails(id) {
             const endpoint = currentMode === 'movie' ? 'movie' : 'tv';
-            // Added watch/providers to query
             const url = `${TMDB_API_BASE_URL}/${endpoint}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers`;
             const response = await fetch(url);
             return await response.json();
@@ -541,61 +548,56 @@
             
             document.getElementById('resultGenreLabel').textContent = `${currentMode === 'movie' ? 'Movie' : 'TV Series'} • ${selectedGenre}`;
             document.getElementById('movieTitle').textContent = title;
+            document.getElementById('movieTagline').textContent = item.tagline ? `"${item.tagline}"` : '';
             document.getElementById('movieRating').textContent = item.vote_average.toFixed(1);
             document.getElementById('movieYear').textContent = year;
             document.getElementById('movieLang').textContent = item.original_language.toUpperCase();
             document.getElementById('movieOrigin').textContent = origin;
             document.getElementById('moviePlot').textContent = item.overview || "No description available.";
 
-            // --- MEDIA EMBED LOGIC (Replacing the poster with trailer) ---
+            // --- MEDIA VISUALS ---
             const mediaContainer = document.getElementById('mediaContainer');
-            const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
-            
-            // Background update
+            // Background
             if (item.poster_path) {
                 dynamicBg.style.backgroundImage = `url('${TMDB_IMAGE_BASE_URL}${item.poster_path}')`;
+                mediaContainer.innerHTML = `<img src="${TMDB_POSTER_BASE_URL}${item.poster_path}" alt="${title}" class="w-full h-full object-cover">`;
+            } else {
+                 mediaContainer.innerHTML = `<div class="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
             }
 
+            // --- TRAILER EMBED ---
+            const trailerSection = document.getElementById('trailerSection');
+            const trailerContainer = trailerSection.querySelector('.aspect-video-container');
+            const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+            
             if (trailer) {
-                // Embed YouTube
-                mediaContainer.innerHTML = `
+                trailerSection.classList.remove('hidden');
+                trailerContainer.innerHTML = `
                     <iframe 
-                        src="https://www.youtube.com/embed/${trailer.key}?autoplay=1&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1" 
+                        src="https://www.youtube.com/embed/${trailer.key}?controls=1&modestbranding=1&rel=0" 
                         title="YouTube video player" 
                         frameborder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowfullscreen>
                     </iframe>
                 `;
-            } else if (item.poster_path) {
-                // Fallback to poster if no trailer
-                mediaContainer.innerHTML = `
-                    <img src="${TMDB_POSTER_BASE_URL}${item.poster_path}" alt="${title}" class="w-full h-full object-cover">
-                `;
             } else {
-                // No image
-                 mediaContainer.innerHTML = `
-                    <div class="w-full h-full bg-slate-900 flex items-center justify-center text-slate-500">
-                        <div class="text-center">
-                            <i data-lucide="image-off" class="w-12 h-12 mx-auto mb-2"></i>
-                            <p>No Visuals</p>
-                        </div>
-                    </div>
-                 `;
+                trailerSection.classList.add('hidden');
+                trailerContainer.innerHTML = '';
             }
 
-            // --- PROVIDERS (Where to watch) ---
+            // --- PROVIDERS (Interactive) ---
             const providersSection = document.getElementById('providersSection');
             const providerIcons = document.getElementById('providerIcons');
             providerIcons.innerHTML = '';
             
-            // Check for IN (India) providers, fallback to US if empty, or hide if none
             const providers = item['watch/providers']?.results;
             const locale = providers?.['IN'] || providers?.['US'];
             
             if (locale && (locale.flatrate || locale.buy || locale.rent)) {
                 providersSection.classList.remove('hidden');
-                // Merge all types to show unique icons
+                const link = locale.link; // TMDB Attribution Link
+                
                 const uniqueProviders = new Map();
                 ['flatrate', 'rent', 'buy'].forEach(type => {
                     if (locale[type]) {
@@ -607,38 +609,43 @@
                     }
                 });
 
-                // Limit to 5 icons
                 Array.from(uniqueProviders.values()).slice(0, 5).forEach(p => {
-                    const img = document.createElement('img');
-                    img.src = `https://image.tmdb.org/t/p/original${p.logo_path}`;
-                    img.className = "w-10 h-10 rounded-lg shadow-md border border-slate-700/50";
-                    img.title = p.provider_name;
-                    providerIcons.appendChild(img);
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.target = "_blank";
+                    a.className = "transform hover:scale-110 transition-transform";
+                    
+                    a.innerHTML = `
+                        <img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md border border-slate-700/50" title="Watch on ${p.provider_name}">
+                    `;
+                    providerIcons.appendChild(a);
                 });
             } else {
                 providersSection.classList.add('hidden');
             }
 
-            // --- CAST WITH PHOTOS ---
+            // --- CAST (Interactive) ---
             const castContainer = document.getElementById('movieCast');
             castContainer.innerHTML = '';
-            const topCast = item.credits?.cast?.slice(0, 5) || [];
+            const topCast = item.credits?.cast?.slice(0, 6) || [];
             
             topCast.forEach(actor => {
-                const div = document.createElement('div');
-                div.className = "flex flex-col items-center gap-1 w-16 text-center";
+                const a = document.createElement('a');
+                a.href = `https://www.google.com/search?q=${encodeURIComponent(actor.name + " actor")}`;
+                a.target = "_blank";
+                a.className = "flex flex-col items-center gap-1 w-16 text-center group/actor";
                 
                 const imgUrl = actor.profile_path 
                     ? `${TMDB_PROFILE_BASE_URL}${actor.profile_path}`
-                    : 'https://via.placeholder.com/150/334155/FFFFFF?text=?'; // Fallback
+                    : 'https://via.placeholder.com/150/334155/FFFFFF?text=?'; 
                 
-                div.innerHTML = `
-                    <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-slate-700 shadow-md">
-                        <img src="${imgUrl}" class="w-full h-full object-cover">
+                a.innerHTML = `
+                    <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-slate-700 shadow-md group-hover/actor:border-rose-500 transition-colors">
+                        <img src="${imgUrl}" class="w-full h-full object-cover group-hover/actor:scale-110 transition-transform duration-500">
                     </div>
-                    <span class="text-[10px] leading-tight text-slate-400 font-medium truncate w-full">${actor.name}</span>
+                    <span class="text-[10px] leading-tight text-slate-400 font-medium truncate w-full group-hover/actor:text-white">${actor.name}</span>
                 `;
-                castContainer.appendChild(div);
+                castContainer.appendChild(a);
             });
 
             // Links
@@ -689,6 +696,7 @@
                         heart.classList.remove('animate-heart');
                         void heart.offsetWidth;
                         heart.classList.add('animate-heart');
+                        popSound.play().catch(e => {}); // subtle sound on like
                         shareContent();
                     }
                 }
