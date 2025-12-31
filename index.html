@@ -87,6 +87,41 @@
         /* Text Shadow */
         .text-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         
+
+        /* --- Mobile friendliness (minimal, non-visual) --- */
+
+        /* Use stable viewport units on mobile to avoid 100vh jumps (address bar) */
+        body { height: 100svh; }
+
+        /* Respect notches / safe areas */
+        header {
+            padding-top: calc(0.75rem + env(safe-area-inset-top));
+            padding-left: calc(1rem + env(safe-area-inset-left));
+            padding-right: calc(1rem + env(safe-area-inset-right));
+        }
+        footer {
+            bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* Make scroll containers feel native on iOS */
+        .no-scrollbar {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Prevent iOS input-zoom by ensuring >=16px font size on small screens */
+        @media (max-width: 640px) {
+            input, select, textarea { font-size: 16px !important; }
+            /* Keep search results usable on small screens */
+            #searchResults { max-height: calc(60svh - 1rem); }
+            /* Reduce horizontal squeeze in header without changing layout structure */
+            header .mx-4 { margin-left: 0.75rem; margin-right: 0.75rem; }
+        }
+
+        /* Allow vertical panning while still preventing accidental double-tap issues */
+        html, body { touch-action: pan-y; }
         /* Expand/Collapse Transition */
         .collapsible-content {
             transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
@@ -402,6 +437,13 @@
             document.getElementById('modeTV').onclick = () => switchMode('tv');
             document.getElementById('surpriseBtn').onclick = surpriseMe;
             document.getElementById('toggleTrailerBtn').onclick = toggleTrailer;
+
+            window.addEventListener('resize', () => {
+                const c = document.getElementById('confetti');
+                if (!c) return;
+                c.width = window.innerWidth;
+                c.height = window.innerHeight;
+            });
 
             // Search Listeners
             const searchInput = document.getElementById('searchInput');
