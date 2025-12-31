@@ -49,15 +49,15 @@
             background-position: center;
             transition: background-image 0.8s ease-in-out;
             transform: scale(1.05);
-            /* Standard blur + brightness for readability */
-            filter: blur(30px) brightness(0.4); 
-            -webkit-filter: blur(30px) brightness(0.4);
+            /* Stronger blur for aesthetics */
+            filter: blur(50px) brightness(0.4);
+            -webkit-filter: blur(50px) brightness(0.4);
         }
         #bg-overlay {
             position: absolute;
             inset: 0;
             z-index: 0;
-            background: linear-gradient(to top, #020617 10%, rgba(2,6,23,0.6) 50%, rgba(2,6,23,0.3) 100%);
+            background: radial-gradient(circle at center, rgba(2,6,23,0.3) 0%, rgba(2,6,23,0.8) 100%);
         }
 
         /* Aspect Ratio Helpers */
@@ -85,7 +85,7 @@
         }
         
         /* Text Shadow */
-        .text-shadow { text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .text-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         
         /* Expand/Collapse Transition */
         .collapsible-content {
@@ -95,7 +95,7 @@
             opacity: 0;
         }
         .collapsible-content.expanded {
-            max-height: 500px; /* Arbitrary large height */
+            max-height: 500px;
             opacity: 1;
         }
     </style>
@@ -108,19 +108,32 @@
     <canvas id="confetti" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
 
     <!-- Header (Fixed Top) -->
-    <header class="fixed top-0 left-0 right-0 z-50 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-        <div class="pointer-events-auto flex items-center gap-2 group cursor-pointer" id="logoBtn">
-            <div class="p-1.5 bg-rose-600 rounded-lg shadow-lg shadow-rose-600/30 group-hover:scale-105 transition-transform">
+    <header class="fixed top-0 left-0 right-0 z-50 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-black/60 backdrop-blur-xl border-b border-white/5 pointer-events-auto">
+        <!-- Logo -->
+        <div class="flex items-center gap-2 group cursor-pointer flex-shrink-0" id="logoBtn">
+            <div class="p-1.5 bg-gradient-to-br from-rose-600 to-purple-600 rounded-lg shadow-lg group-hover:scale-105 transition-transform">
                 <i data-lucide="clapperboard" class="text-white w-5 h-5"></i>
             </div>
             <span class="text-xl font-black tracking-tighter text-white drop-shadow-md hidden md:block">
                 Watch<span class="text-rose-500">Next</span>
             </span>
         </div>
+
+        <!-- CENTER: Search Bar (Global) -->
+        <div class="relative w-full max-w-md mx-4">
+            <div class="bg-white/10 rounded-full flex items-center px-4 py-2 border border-white/5 focus-within:bg-white/15 focus-within:border-rose-500/50 transition-all group">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2 group-focus-within:text-white transition-colors"></i>
+                <input type="text" id="searchInput" placeholder="Search..." class="bg-transparent border-none text-white placeholder-slate-400 text-sm w-full focus:outline-none">
+                <button id="clearSearch" class="hidden text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </div>
+            <!-- Search Results -->
+            <div id="searchResults" class="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl hidden max-h-[60vh] overflow-y-auto custom-scroll z-[90]"></div>
+        </div>
         
-        <div class="pointer-events-auto flex items-center bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-xl">
-            <button id="modeMovie" class="px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105">Movies</button>
-            <button id="modeTV" class="px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105">TV</button>
+        <!-- Toggle -->
+        <div class="flex items-center bg-black/40 p-1 rounded-full border border-white/10 flex-shrink-0">
+            <button id="modeMovie" class="px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg">Movies</button>
+            <button id="modeTV" class="px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all">TV</button>
         </div>
     </header>
 
@@ -134,29 +147,16 @@
             <button onclick="document.getElementById('errorToast').classList.add('hidden')" class="ml-2 opacity-80 hover:opacity-100">✕</button>
         </div>
 
-        <!-- VIEW 1: SELECTION (Scrollable content area) -->
-        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pt-24 pb-10 px-4 flex flex-col items-center">
+        <!-- VIEW 1: SELECTION -->
+        <div id="genreSelectionView" class="w-full h-full overflow-y-auto no-scrollbar pt-24 pb-12 px-4 flex flex-col items-center">
             
-            <div class="text-center mb-8 mt-4 animate-fade-in w-full max-w-3xl relative z-[70]">
-                <h2 class="text-4xl md:text-6xl font-black text-white mb-3 text-shadow tracking-tight">Find your next <span class="text-rose-500">obsession</span>.</h2>
-                <p id="modeDescription" class="text-slate-300 text-base md:text-lg font-medium opacity-80 mb-8">Browsing Movies</p>
-                
-                <!-- Search Bar (High Z-Index) -->
-                <div class="relative w-full max-w-lg mx-auto z-[80]">
-                    <div class="glass-panel rounded-full flex items-center px-5 py-4 shadow-2xl focus-within:ring-2 focus-within:ring-rose-500 transition-all group">
-                        <i data-lucide="search" class="w-5 h-5 text-slate-400 mr-3 group-focus-within:text-white transition-colors"></i>
-                        <input type="text" id="searchInput" placeholder="Search for movies & series..." class="bg-transparent border-none text-white placeholder-slate-400 text-base w-full focus:outline-none">
-                        <button id="clearSearch" class="hidden text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    </div>
-                    <!-- Search Results Dropdown -->
-                    <div id="searchResults" class="absolute top-full left-0 right-0 mt-3 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl hidden max-h-[50vh] overflow-y-auto custom-scroll z-[90]">
-                        <!-- Results injected here -->
-                    </div>
-                </div>
+            <div class="text-center mb-8 mt-4 animate-fade-in w-full max-w-3xl">
+                <h2 class="text-4xl md:text-6xl font-black text-white mb-2 text-shadow tracking-tight">Find your next <span class="text-rose-500">obsession</span>.</h2>
+                <p id="modeDescription" class="text-slate-300 text-base md:text-lg font-medium opacity-80">Browsing Movies</p>
             </div>
 
             <!-- Filters Bar -->
-            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-3 mb-10 animate-fade-in relative z-10" style="animation-delay: 0.1s">
+            <div class="w-full max-w-5xl grid grid-cols-2 md:grid-cols-5 gap-3 mb-10 animate-fade-in" style="animation-delay: 0.1s">
                 <div class="glass rounded-xl p-3 flex flex-col justify-center">
                     <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Era</label>
                     <div class="relative">
@@ -189,14 +189,13 @@
                         <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
                     </div>
                 </div>
-                <!-- RUNTIME FILTER -->
                 <div class="glass rounded-xl p-3 flex flex-col justify-center">
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Runtime</label>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 px-1 mb-1">Length</label>
                     <div class="relative">
                         <select id="runtimeFilter" class="w-full bg-transparent text-white text-xs md:text-sm font-bold focus:outline-none cursor-pointer appearance-none">
                             <option value="" class="bg-slate-900">Any</option>
                             <option value="short" class="bg-slate-900">Short (&lt; 90m)</option>
-                            <option value="medium" class="bg-slate-900">Standard (90-120m)</option>
+                            <option value="medium" class="bg-slate-900">Standard</option>
                             <option value="long" class="bg-slate-900">Epic (&gt; 120m)</option>
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-0 top-0.5 w-3 h-3 text-slate-500 pointer-events-none"></i>
@@ -236,28 +235,27 @@
             <p id="loadingSubtext" class="text-slate-400 text-sm">Searching the multiverse</p>
         </div>
 
-        <!-- VIEW 3: RESULT (Full Screen Immersive) -->
+        <!-- VIEW 3: RESULT -->
         <div id="resultView" class="hidden absolute inset-0 z-40 flex flex-col md:flex-row h-full w-full overflow-hidden bg-black/80">
             
-            <!-- Close / Back Button (Mobile) -->
-            <button onclick="resetApp()" class="md:hidden absolute top-4 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
+            <!-- Close / Back Button -->
+            <button onclick="resetApp()" class="md:hidden absolute top-20 left-4 z-50 bg-black/50 p-2 rounded-full text-white backdrop-blur-md border border-white/10 shadow-lg hover:bg-rose-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-6 h-6"></i>
             </button>
 
             <!-- LEFT/TOP: Permanent Poster Area -->
-            <!-- Reduced width for smaller poster presentation -->
-            <div class="w-full md:w-4/12 h-[40vh] md:h-full relative bg-black/50 flex-shrink-0 border-r border-white/5 flex items-center justify-center p-6 md:p-12">
-                <div id="posterArea" class="w-full max-w-[300px] md:max-w-full h-auto aspect-[2/3] relative shadow-2xl rounded-xl overflow-hidden border border-white/10">
+            <div class="w-full md:w-4/12 h-[40vh] md:h-full relative bg-black/50 flex-shrink-0 border-r border-white/5 flex items-center justify-center p-6 md:p-12 pt-24 md:pt-12">
+                <div id="posterArea" class="w-full max-w-[280px] md:max-w-full h-auto aspect-[2/3] relative shadow-2xl rounded-xl overflow-hidden border border-white/10 transform transition-transform hover:scale-[1.02]">
                     <!-- Poster injected here via JS -->
                 </div>
-                <!-- Gradient Overlay for Mobile Text Readability -->
+                <!-- Gradient Overlay -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent md:hidden pointer-events-none"></div>
             </div>
 
-            <!-- RIGHT/BOTTOM: Details & Trailer -->
-            <div class="w-full md:w-8/12 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative">
+            <!-- RIGHT/BOTTOM: Details -->
+            <div class="w-full md:w-8/12 h-[60vh] md:h-full bg-gradient-to-t md:bg-gradient-to-r from-black via-black/95 to-transparent flex flex-col overflow-y-auto no-scrollbar relative pt-4 md:pt-24">
                 
-                <div class="p-6 md:p-10 md:pt-16 max-w-4xl mx-auto w-full">
+                <div class="p-6 md:p-10 max-w-4xl mx-auto w-full">
                     
                     <!-- Header Info -->
                     <div class="flex flex-wrap items-center gap-3 mb-3">
@@ -269,32 +267,17 @@
                     </div>
 
                     <!-- Title -->
-                    <h1 id="resTitle" class="text-3xl md:text-5xl font-black text-white leading-tight mb-2 text-shadow">Movie Title</h1>
+                    <h1 id="resTitle" class="text-3xl md:text-6xl font-black text-white leading-tight mb-2 text-shadow">Movie Title</h1>
                     <p id="resTagline" class="text-sm md:text-lg text-slate-400 italic mb-6 font-light border-l-2 border-rose-500 pl-3">"The tagline goes here"</p>
 
-                    <!-- Metadata Chips (Extra Info added here) -->
-                    <div class="flex flex-wrap gap-2 mb-6">
-                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1">
-                            <i data-lucide="clock" class="w-3 h-3"></i> <span id="resRuntime">120m</span>
-                        </div>
-                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white uppercase" id="resLang">EN</div>
-                        <div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-green-400" id="resStatus">Released</div>
+                    <!-- Metadata Chips -->
+                    <div class="flex flex-wrap gap-2 mb-6" id="metaChips">
+                        <!-- Chips injected JS -->
                     </div>
                     
                     <!-- Extended Info Panel -->
-                    <div id="extraInfoPanel" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 text-xs text-slate-400 hidden">
-                        <div>
-                            <span class="block font-bold text-slate-500 uppercase">Budget</span>
-                            <span id="resBudget" class="text-white">-</span>
-                        </div>
-                        <div>
-                            <span class="block font-bold text-slate-500 uppercase">Revenue</span>
-                            <span id="resRevenue" class="text-white">-</span>
-                        </div>
-                        <div>
-                            <span class="block font-bold text-slate-500 uppercase">Production</span>
-                            <span id="resProduction" class="text-white">-</span>
-                        </div>
+                    <div id="extraInfoPanel" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-xs text-slate-400 p-4 bg-white/5 rounded-xl border border-white/5">
+                        <!-- Injected JS -->
                     </div>
 
                     <!-- Plot -->
@@ -302,16 +285,14 @@
                         Detailed plot summary goes here...
                     </p>
 
-                    <!-- COLLAPSIBLE TRAILER (Collapsed by Default) -->
+                    <!-- COLLAPSIBLE TRAILER -->
                     <div class="mb-8 border border-white/10 rounded-xl overflow-hidden bg-black/40">
                         <button id="toggleTrailerBtn" class="w-full flex items-center justify-between p-4 text-sm font-bold text-white hover:bg-white/5 transition-colors">
                             <span class="flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4 text-rose-500"></i> Watch Trailer</span>
                             <i id="trailerIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
                         </button>
                         <div id="inlineTrailerContainer" class="collapsible-content">
-                            <div id="inlineTrailer" class="w-full aspect-video-container">
-                                <!-- Iframe injected here -->
-                            </div>
+                            <div id="inlineTrailer" class="w-full aspect-video-container"></div>
                         </div>
                     </div>
 
@@ -353,6 +334,11 @@
 
     </main>
 
+    <!-- Permanent Footer -->
+    <footer class="fixed bottom-2 left-0 right-0 text-center z-[100] pointer-events-none">
+        <p class="text-[10px] text-slate-500 font-medium opacity-60">Arnav Dugad © 2025</p>
+    </footer>
+
     <script>
         // --- CONFIG ---
         const API_KEY = "2b834d5234781ad70bd646922e9ddd18";
@@ -366,13 +352,17 @@
             'Amazon Prime Video': 'https://www.primevideo.com/search/ref=atv_nb_sr?phrase=',
             'Disney Plus': 'https://www.disneyplus.com/search?q=',
             'Hotstar': 'https://www.hotstar.com/in/explore?q=',
+            'Disney+ Hotstar': 'https://www.hotstar.com/in/explore?q=',
             'Hulu': 'https://www.hulu.com/search?q=',
             'YouTube': 'https://www.youtube.com/results?search_query=',
             'JioCinema': 'https://www.jiocinema.com/search/',
             'Zee5': 'https://www.zee5.com/search?q=',
             'SonyLIV': 'https://www.sonyliv.com/search/',
             'Apple TV': 'https://tv.apple.com/search?term=',
-            'HBO Max': 'https://play.hbomax.com/search?q='
+            'HBO Max': 'https://play.hbomax.com/search?q=',
+            'Crunchyroll': 'https://www.crunchyroll.com/search?q=',
+            'Peacock': 'https://www.peacocktv.com/search?q=',
+            'Paramount+': 'https://www.paramountplus.com/search/?q='
         };
 
         const MOVIE_GENRES = {
@@ -411,8 +401,6 @@
             document.getElementById('modeMovie').onclick = () => switchMode('movie');
             document.getElementById('modeTV').onclick = () => switchMode('tv');
             document.getElementById('surpriseBtn').onclick = surpriseMe;
-            
-            // Toggle Trailer
             document.getElementById('toggleTrailerBtn').onclick = toggleTrailer;
 
             // Search Listeners
@@ -442,11 +430,9 @@
         // --- NAVIGATION ---
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('modeMovie').className = mode === 'movie' ? "px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105" : "px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105";
-            document.getElementById('modeTV').className = mode === 'tv' ? "px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-600 text-white shadow-lg transform hover:scale-105" : "px-5 py-2 rounded-full text-xs font-bold text-slate-400 hover:text-white transition-all transform hover:scale-105";
+            document.getElementById('modeMovie').className = mode === 'movie' ? "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all";
+            document.getElementById('modeTV').className = mode === 'tv' ? "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all bg-rose-600 text-white shadow-lg" : "px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-400 hover:text-white transition-all";
             document.getElementById('modeDescription').textContent = mode === 'movie' ? "Browsing Movies" : "Browsing TV Series";
-            // Note: Placeholder updated but functionality is now GLOBAL search
-            document.getElementById('searchInput').placeholder = "Search movies & series..."; 
             renderGenres();
             lucide.createIcons();
         }
@@ -454,12 +440,9 @@
         function resetApp() {
             document.getElementById('resultView').classList.add('hidden');
             document.getElementById('genreSelectionView').classList.remove('hidden');
-            // Clear result visuals
             document.getElementById('posterArea').innerHTML = '';
             document.getElementById('inlineTrailer').innerHTML = '';
             document.getElementById('dynamic-bg').style.backgroundImage = `url('https://image.tmdb.org/t/p/original/1E5baAaEse26fej7uHcjOgEE2t2.jpg')`;
-            
-            // Reset trailer state
             isTrailerExpanded = false;
             document.getElementById('inlineTrailerContainer').classList.remove('expanded');
             document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
@@ -474,7 +457,6 @@
                 const btn = document.createElement('button');
                 btn.className = "group relative h-24 bg-slate-800/50 hover:bg-rose-600 rounded-xl border border-white/5 transition-all overflow-hidden flex flex-col items-center justify-center gap-1 active:scale-95";
                 
-                // Icon handling
                 let iconEl;
                 if(data.icon === 'sword') iconEl = '<i data-lucide="sword" class="w-6 h-6 text-slate-400 group-hover:text-white transition-colors"></i>';
                 else if(data.icon === 'ghost') iconEl = '<div class="text-2xl group-hover:scale-110 transition-transform">👻</div>';
@@ -492,7 +474,7 @@
             });
         }
 
-        // --- SEARCH LOGIC (GLOBAL) ---
+        // --- SEARCH LOGIC ---
         function handleSearch(e) {
             const query = e.target.value.trim();
             const resultsDiv = document.getElementById('searchResults');
@@ -510,7 +492,6 @@
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    // Use multi-search to find both movies and tv shows
                     const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`);
                     const data = await res.json();
                     
@@ -518,8 +499,7 @@
                         resultsDiv.innerHTML = '';
                         resultsDiv.classList.remove('hidden');
                         
-                        // Filter for only 'movie' and 'tv' media types
-                        const filtered = data.results.filter(item => item.media_type === 'movie' || item.media_type === 'tv').slice(0, 10);
+                        const filtered = data.results.filter(item => item.media_type === 'movie' || item.media_type === 'tv').slice(0, 8);
 
                         if(filtered.length === 0) {
                              resultsDiv.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">No results found</div>';
@@ -533,8 +513,7 @@
                             div.className = "flex items-center gap-4 p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0 transition-colors";
                             const img = item.poster_path ? `${POSTER_URL}${item.poster_path}` : 'https://via.placeholder.com/50x75?text=No+Img';
                             const title = item.title || item.name;
-                            const date = (item.release_date || item.first_air_date || '');
-                            const year = date.split('-')[0];
+                            const year = (item.release_date || item.first_air_date || '').split('-')[0];
                             const type = item.media_type === 'movie' ? 'Movie' : 'TV Series';
                             
                             div.innerHTML = `
@@ -548,8 +527,7 @@
                                 </div>
                             `;
                             div.onclick = () => {
-                                // Set global mode based on selection so API calls work correctly
-                                currentMode = item.media_type; 
+                                switchMode(item.media_type);
                                 loadItemDetails(item.id);
                                 document.getElementById('searchInput').value = '';
                                 resultsDiv.classList.add('hidden');
@@ -578,7 +556,6 @@
         async function fetchContent(genreId) {
             showLoading(true);
             try {
-                // Filters
                 const year = document.getElementById('decadeFilter').value;
                 const lang = document.getElementById('languageFilter').value;
                 const sort = document.getElementById('sortFilter').value;
@@ -587,30 +564,40 @@
                 let params = `&with_genres=${genreId}&sort_by=${sort}&vote_count.gte=100`;
                 if(lang) params += `&with_original_language=${lang}`;
                 
-                // Date logic
                 const dateKey = currentMode === 'movie' ? 'primary_release_date' : 'first_air_date';
                 if(year === '2024') params += `&${dateKey}.gte=2024-01-01`;
                 else if(year === '1980') params += `&${dateKey}.gte=1980-01-01&${dateKey}.lte=1989-12-31`;
                 else if(year) params += `&${dateKey}.gte=${year}-01-01&${dateKey}.lte=${parseInt(year)+9}-12-31`;
 
-                // Runtime logic
                 if (runtime === 'short') params += `&with_runtime.lte=90`;
                 else if (runtime === 'medium') params += `&with_runtime.gte=90&with_runtime.lte=120`;
                 else if (runtime === 'long') params += `&with_runtime.gte=120`;
 
-                // Discover
-                const randomPage = Math.floor(Math.random() * 10) + 1;
-                const res = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=${randomPage}&include_adult=false${params}`);
-                const data = await res.json();
+                // SMART PAGINATION: Fetch page 1 to get stats, then randomize
+                const initRes = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=1&include_adult=false${params}`);
+                const initData = await initRes.json();
+
+                if(!initData.results || initData.total_results === 0) throw new Error("No content found");
+
+                const totalPages = Math.min(initData.total_pages, 10); // Cap at 10 to ensure popularity
+                const randomPage = Math.floor(Math.random() * totalPages) + 1;
+
+                // If page 1, use initData, else fetch random page
+                let results = initData.results;
+                if(randomPage > 1) {
+                    const pageRes = await fetch(`${BASE_URL}/discover/${currentMode}?api_key=${API_KEY}&page=${randomPage}&include_adult=false${params}`);
+                    const pageData = await pageRes.json();
+                    results = pageData.results;
+                }
+
+                if(!results || results.length === 0) throw new Error("No content on this page");
                 
-                if(!data.results?.length) throw new Error("No content found");
-                const item = data.results[Math.floor(Math.random() * data.results.length)];
-                
+                const item = results[Math.floor(Math.random() * results.length)];
                 await loadItemDetails(item.id);
                 
             } catch (err) {
                 console.error(err);
-                showError("Nothing found. Try different filters.");
+                showError("Nothing found. Try broadening filters.");
                 showLoading(false);
             }
         }
@@ -618,156 +605,198 @@
         async function loadItemDetails(id) {
             showLoading(true);
             try {
+                if (!id) throw new Error("Invalid ID");
+                
                 const res = await fetch(`${BASE_URL}/${currentMode}/${id}?api_key=${API_KEY}&append_to_response=credits,videos,watch/providers,recommendations`);
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
                 const item = await res.json();
+                
+                if (!item || (item.success === false)) {
+                    throw new Error(item.status_message || "Item not found");
+                }
+
                 currentItem = item;
                 displayResult(item);
             } catch(e) {
-                showError("Failed to load details");
+                console.error("Load Details Error:", e);
+                showError("Failed to load details. Please try again.");
                 showLoading(false);
             }
         }
 
         // --- DISPLAY LOGIC ---
         function displayResult(item) {
-            const title = item.title || item.name;
-            const date = item.release_date || item.first_air_date || '';
-            const year = date.split('-')[0];
-            const runtime = item.runtime || (item.episode_run_time?.[0]) || '?';
-            
-            // Text Content
-            document.getElementById('resTitle').textContent = title;
-            document.getElementById('resTagline').textContent = item.tagline || '';
-            document.getElementById('resYear').textContent = year;
-            document.getElementById('resRating').innerHTML = `${item.vote_average.toFixed(1)}`;
-            document.getElementById('resRuntime').textContent = `${runtime} min`;
-            document.getElementById('resLang').textContent = (item.original_language || 'en').toUpperCase();
-            document.getElementById('resPlot').textContent = item.overview;
-            document.getElementById('resGenre').textContent = item.genres?.[0]?.name || 'Unknown';
-            document.getElementById('resStatus').textContent = item.status;
-
-            // Extra Info (Budget/Revenue)
-            const extraPanel = document.getElementById('extraInfoPanel');
-            if (currentMode === 'movie') {
-                extraPanel.classList.remove('hidden');
-                document.getElementById('resBudget').textContent = item.budget > 0 ? `$${(item.budget/1000000).toFixed(1)}M` : 'N/A';
-                document.getElementById('resRevenue').textContent = item.revenue > 0 ? `$${(item.revenue/1000000).toFixed(1)}M` : 'N/A';
-                document.getElementById('resProduction').textContent = item.production_companies?.[0]?.name || 'N/A';
-            } else {
-                // Hide or change fields for TV
-                extraPanel.classList.add('hidden');
-            }
-
-            // Background & Poster
-            if(item.poster_path) {
-                // Ensure Blur is applied via CSS class on the element
-                document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.poster_path}')`;
-            } else if (item.backdrop_path) {
-                document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.backdrop_path}')`;
-            }
-
-            // 1. LEFT SIDE: Permanent Poster
-            const posterArea = document.getElementById('posterArea');
-            if(item.poster_path) {
-                posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover shadow-2xl rounded-xl">`;
-            } else {
-                posterArea.innerHTML = `<div class="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
-            }
-
-            // 2. INLINE TRAILER (Collapsible)
-            const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser' || v.type === 'Clip'));
-            const inlineTrailer = document.getElementById('inlineTrailer');
-            const toggleBtn = document.getElementById('toggleTrailerBtn');
-            
-            // Reset collapse state
-            isTrailerExpanded = false;
-            document.getElementById('inlineTrailerContainer').classList.remove('expanded');
-            document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
-
-            if(trailer) {
-                toggleBtn.parentElement.classList.remove('hidden');
-                // Simple Iframe to fix Error 153
-                const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=0&controls=1&rel=0`;
-                inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            } else {
-                toggleBtn.parentElement.classList.add('hidden');
-                inlineTrailer.innerHTML = '';
-            }
-
-            // Providers (Strict Links)
-            const provs = item['watch/providers']?.results?.['IN'] || item['watch/providers']?.results?.['US'];
-            const provArea = document.getElementById('providersArea');
-            const provList = document.getElementById('providerIcons');
-            provList.innerHTML = '';
-            
-            if(provs && (provs.flatrate || provs.buy || provs.rent)) {
-                provArea.classList.remove('hidden');
-                const methods = [...(provs.flatrate||[]), ...(provs.buy||[]), ...(provs.rent||[])];
-                const unique = new Map();
-                methods.forEach(p => unique.set(p.provider_id, p));
+            try {
+                const title = item.title || item.name || "Unknown";
+                const date = item.release_date || item.first_air_date || '';
+                const year = date.split('-')[0] || 'N/A';
                 
-                Array.from(unique.values()).slice(0, 6).forEach(p => {
-                    const a = document.createElement('a');
-                    let searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
-                    
-                    a.href = searchUrl;
-                    a.target = "_blank";
-                    a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="Watch on ${p.provider_name}">`;
-                    provList.appendChild(a);
-                });
-            } else {
-                provArea.classList.add('hidden');
-            }
+                // Text Content
+                document.getElementById('resTitle').textContent = title;
+                document.getElementById('resTagline').textContent = item.tagline || '';
+                document.getElementById('resYear').textContent = year;
+                document.getElementById('resRating').innerHTML = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+                document.getElementById('resPlot').textContent = item.overview || "No synopsis available.";
+                document.getElementById('resGenre').textContent = item.genres?.[0]?.name || 'Unknown';
 
-            // Cast
-            const castList = document.getElementById('castList');
-            castList.innerHTML = '';
-            (item.credits?.cast || []).slice(0, 8).forEach(c => {
-               const div = document.createElement('div');
-               div.className = "flex flex-col items-center min-w-[64px] gap-2 group/cast";
-               const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
-               div.innerHTML = `
-                   <a href="https://www.google.com/search?q=${encodeURIComponent(c.name)}" target="_blank" class="block w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-rose-500 transition-all shadow-md">
-                    <img src="${img}" class="w-full h-full object-cover group-hover/cast:scale-110 transition-transform duration-500">
-                   </a>
-                   <span class="text-[10px] text-slate-400 font-bold text-center truncate w-full group-hover/cast:text-white transition-colors">${c.name}</span>
-               `;
-               castList.appendChild(div);
-            });
+                // Background
+                if(item.poster_path) {
+                    document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.poster_path}')`;
+                } else if (item.backdrop_path) {
+                    document.getElementById('dynamic-bg').style.backgroundImage = `url('${IMG_URL}${item.backdrop_path}')`;
+                }
 
-            // Recommendations
-            const recs = item.recommendations?.results || [];
-            const recsArea = document.getElementById('recsArea');
-            const recsList = document.getElementById('recsList');
-            recsList.innerHTML = '';
-            
-            if(recs.length > 0) {
-                recsArea.classList.remove('hidden');
-                recs.slice(0, 8).forEach(r => {
-                    if(!r.poster_path) return;
-                    const div = document.createElement('div');
-                    div.className = "relative min-w-[90px] h-[135px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform border border-white/10 shadow-lg group/rec";
-                    div.innerHTML = `
-                        <img src="${POSTER_URL}${r.poster_path}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/rec:opacity-100 transition-opacity"></div>
+                // --- INFO LOGIC (MOVIE vs TV) ---
+                const metaChips = document.getElementById('metaChips');
+                const extraPanel = document.getElementById('extraInfoPanel');
+                metaChips.innerHTML = '';
+                extraPanel.innerHTML = '';
+
+                // Common Chip: Lang
+                metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white uppercase">${item.original_language || 'EN'}</div>`;
+                // Common Chip: Status
+                metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-green-400">${item.status}</div>`;
+
+                if(currentMode === 'movie') {
+                    // Movie Runtime
+                    if(item.runtime) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${item.runtime}m</div>`;
+                    }
+                    // Movie Extra Info
+                    extraPanel.classList.remove('hidden');
+                    extraPanel.innerHTML = `
+                        <div><span class="block font-bold text-slate-500 uppercase">Budget</span><span class="text-white">${item.budget > 0 ? '$'+(item.budget/1000000).toFixed(1)+'M' : '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase">Revenue</span><span class="text-white">${item.revenue > 0 ? '$'+(item.revenue/1000000).toFixed(1)+'M' : '-'}</span></div>
+                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase">Production</span><span class="text-white truncate block">${item.production_companies?.[0]?.name || '-'}</span></div>
                     `;
-                    div.onclick = () => {
-                        loadItemDetails(r.id);
-                    };
-                    recsList.appendChild(div);
+                } else {
+                    // TV Info
+                    if(item.number_of_seasons) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i> ${item.number_of_seasons} Seasons</div>`;
+                    }
+                    if(item.number_of_episodes) {
+                        metaChips.innerHTML += `<div class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1"><i data-lucide="film" class="w-3 h-3"></i> ${item.number_of_episodes} Eps</div>`;
+                    }
+                    // TV Extra Info
+                    extraPanel.classList.remove('hidden');
+                    extraPanel.innerHTML = `
+                        <div><span class="block font-bold text-slate-500 uppercase">First Air</span><span class="text-white">${item.first_air_date || '-'}</span></div>
+                        <div><span class="block font-bold text-slate-500 uppercase">Last Air</span><span class="text-white">${item.last_air_date || '-'}</span></div>
+                        <div class="col-span-2"><span class="block font-bold text-slate-500 uppercase">Network</span><span class="text-white truncate block">${item.networks?.[0]?.name || '-'}</span></div>
+                    `;
+                }
+
+                // Poster
+                const posterArea = document.getElementById('posterArea');
+                if(item.poster_path) {
+                    posterArea.innerHTML = `<img src="${POSTER_URL}${item.poster_path}" class="w-full h-full object-cover shadow-2xl rounded-xl">`;
+                } else {
+                    posterArea.innerHTML = `<div class="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center text-slate-500"><i data-lucide="image-off" class="w-12 h-12"></i></div>`;
+                }
+
+                // Trailer
+                const trailer = item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer' && v.official) || item.videos?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+                const inlineTrailer = document.getElementById('inlineTrailer');
+                const toggleBtn = document.getElementById('toggleTrailerBtn');
+                inlineTrailer.innerHTML = '';
+                isTrailerExpanded = false;
+                document.getElementById('inlineTrailerContainer').classList.remove('expanded');
+                document.getElementById('trailerIcon').style.transform = 'rotate(0deg)';
+
+                if(trailer) {
+                    toggleBtn.parentElement.classList.remove('hidden');
+                    const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=0&controls=1&rel=0`;
+                    inlineTrailer.innerHTML = `<iframe src="${embedUrl}" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                } else {
+                    toggleBtn.parentElement.classList.add('hidden');
+                    inlineTrailer.innerHTML = '';
+                }
+
+                // Providers
+                const provs = item['watch/providers']?.results?.['IN'] || item['watch/providers']?.results?.['US'];
+                const provArea = document.getElementById('providersArea');
+                const provList = document.getElementById('providerIcons');
+                provList.innerHTML = '';
+                
+                if(provs && (provs.flatrate || provs.buy || provs.rent)) {
+                    provArea.classList.remove('hidden');
+                    const methods = [...(provs.flatrate||[]), ...(provs.buy||[]), ...(provs.rent||[])];
+                    const unique = new Map();
+                    methods.forEach(p => unique.set(p.provider_id, p));
+                    
+                    Array.from(unique.values()).slice(0, 6).forEach(p => {
+                        const a = document.createElement('a');
+                        // Direct search link logic
+                        let searchUrl = STREAM_URLS[p.provider_name] ? `${STREAM_URLS[p.provider_name]}${encodeURIComponent(title)}` : `https://www.google.com/search?q=watch ${encodeURIComponent(title)} on ${p.provider_name}`;
+                        
+                        a.href = searchUrl;
+                        a.target = "_blank";
+                        a.innerHTML = `<img src="https://image.tmdb.org/t/p/original${p.logo_path}" class="w-10 h-10 rounded-lg shadow-md hover:scale-110 transition-transform cursor-pointer border border-white/10" title="Watch on ${p.provider_name}">`;
+                        provList.appendChild(a);
+                    });
+                } else {
+                    provArea.classList.add('hidden');
+                }
+
+                // Cast
+                const castList = document.getElementById('castList');
+                castList.innerHTML = '';
+                (item.credits?.cast || []).slice(0, 8).forEach(c => {
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center min-w-[64px] gap-2 group/cast";
+                const img = c.profile_path ? `${PROFILE_URL}${c.profile_path}` : 'https://via.placeholder.com/100x100?text=?';
+                div.innerHTML = `
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(c.name)}" target="_blank" class="block w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover/cast:border-rose-500 transition-all shadow-md">
+                        <img src="${img}" class="w-full h-full object-cover group-hover/cast:scale-110 transition-transform duration-500">
+                    </a>
+                    <span class="text-[10px] text-slate-400 font-bold text-center truncate w-full group-hover/cast:text-white transition-colors">${c.name}</span>
+                `;
+                castList.appendChild(div);
                 });
-            } else {
-                recsArea.classList.add('hidden');
+
+                // Recommendations
+                const recs = item.recommendations?.results || [];
+                const recsArea = document.getElementById('recsArea');
+                const recsList = document.getElementById('recsList');
+                recsList.innerHTML = '';
+                
+                if(recs.length > 0) {
+                    recsArea.classList.remove('hidden');
+                    recs.slice(0, 8).forEach(r => {
+                        if(!r.poster_path) return;
+                        const div = document.createElement('div');
+                        div.className = "relative min-w-[90px] h-[135px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform border border-white/10 shadow-lg group/rec";
+                        div.innerHTML = `
+                            <img src="${POSTER_URL}${r.poster_path}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/rec:opacity-100 transition-opacity"></div>
+                        `;
+                        div.onclick = () => {
+                            // Update mode if media_type is present
+                            if (r.media_type) currentMode = r.media_type; 
+                            loadItemDetails(r.id);
+                        };
+                        recsList.appendChild(div);
+                    });
+                } else {
+                    recsArea.classList.add('hidden');
+                }
+
+                // Stream Button Link
+                document.getElementById('streamLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
+
+                // Switch Views
+                document.getElementById('genreSelectionView').classList.add('hidden');
+                document.getElementById('resultView').classList.remove('hidden');
+                lucide.createIcons();
+
+            } catch (err) {
+                console.error("Display Error:", err);
+                showError("Error displaying content.");
+            } finally {
+                showLoading(false);
             }
-
-            // Stream Button Link
-            document.getElementById('streamLink').href = `https://www.justwatch.com/in/search?q=${encodeURIComponent(title)}`;
-
-            // Switch Views
-            showLoading(false);
-            document.getElementById('genreSelectionView').classList.add('hidden');
-            document.getElementById('resultView').classList.remove('hidden');
-            lucide.createIcons();
         }
 
         // --- HELPERS ---
